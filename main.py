@@ -41,11 +41,11 @@ if __name__ == '__main__':
             stat, data = msrvr.fetch(cnt[0], '(UID BODY[TEXT])')
             if 'off' in data[0][1]:
                 print("Generator is going down")
-                # generator_cmd(cmd='off')
+                generator_cmd(cmd='off')
                 set_gen_state(False)
             elif 'on' in data[0][1]:
                 print("Generator is going up")
-                # generator_cmd(cmd='on')
+                generator_cmd(cmd='on')
                 set_gen_state(True)
             delete_messages()
             time.sleep(sleep_time)
