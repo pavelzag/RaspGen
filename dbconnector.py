@@ -6,7 +6,11 @@ db = client.generator
 
 
 def set_gen_state(state):
-    print('setting')
+    if state:
+        state_print = "up"
+    else:
+        state_print = "down"
+    print('setting state to: ' + state_print)
     db.generator_state.update_one({'_id':'59663b5df344225ae3d823cb'}, {"$set": {"state": state}}, upsert=True)
     cursor = db.generator_state.find({'state': state})
     for document in cursor:

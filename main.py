@@ -23,6 +23,7 @@ def generator_cmd(cmd):
 
 
 def delete_messages():
+    print('Deleting all messages')
     msrvr.select('Inbox')
     typ, data = msrvr.search(None, 'ALL')
     for num in data[0].split():
@@ -39,13 +40,13 @@ if __name__ == '__main__':
             stat, cnt = msrvr.select('Inbox')
             stat, data = msrvr.fetch(cnt[0], '(UID BODY[TEXT])')
             if 'off' in data[0][1]:
-                generator_cmd(cmd='off')
-                set_gen_state(True)
                 print("Generator is going down")
+                # generator_cmd(cmd='off')
+                set_gen_state(False)
             elif 'on' in data[0][1]:
-                generator_cmd(cmd='on')
-                set_gen_state(True)
                 print("Generator is going up")
+                # generator_cmd(cmd='on')
+                set_gen_state(True)
             delete_messages()
             time.sleep(sleep_time)
         except:

@@ -1,4 +1,4 @@
 creds:
     email: me@gmail.com
-    password: somepass
+    password: password
     sleep_time: 10
