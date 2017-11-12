@@ -1,7 +1,8 @@
 import imaplib
+import re
 import time
 from dbconnector import set_gen_state
-from configuration import get_config
+from configuration import get_config, get_white_list
 import RPi.GPIO as GPIO
 
 receiver_email = get_config('email')
@@ -23,13 +24,29 @@ def generator_cmd(cmd):
 
 
 def delete_messages():
-    print('Deleting all messages')
     msrvr.select('Inbox')
     typ, data = msrvr.search(None, 'ALL')
     for num in data[0].split():
        msrvr.store(num, '+FLAGS', '\\Deleted')
     msrvr.expunge()
 
+
+def get_body(cnt):
+    cnt, data = msrvr.fetch(cnt[0], '(UID BODY[TEXT])')
+    return data[0][1]
+
+
+def get_sender():
+    from_data = msrvr.fetch(cnt[0], '(BODY[HEADER.FIELDS (SUBJECT FROM)])')
+    header_data = from_data[1][0][1]
+    return ''.join(re.findall(r'<(.+?)>', header_data))
+
+
+def is_in_white_list(from_address):
+    if from_address in get_white_list():
+        return True
+    else:
+        return False
 
 if __name__ == '__main__':
     msrvr = imaplib.IMAP4_SSL('imap.gmail.com', 993)
@@ -38,15 +55,20 @@ if __name__ == '__main__':
     while i == 1:
         try:
             stat, cnt = msrvr.select('Inbox')
-            stat, data = msrvr.fetch(cnt[0], '(UID BODY[TEXT])')
-            if 'off' in data[0][1]:
-                print("Generator is going down")
-                generator_cmd(cmd='off')
-                set_gen_state(False)
-            elif 'on' in data[0][1]:
-                print("Generator is going up")
-                generator_cmd(cmd='on')
-                set_gen_state(True)
+            body = get_body(cnt)
+            from_address = get_sender()
+            if is_in_white_list(from_address):
+                print(from_address + " is in the white list")
+                if 'off' in body:
+                    generator_cmd(cmd='off')
+                    set_gen_state(True)
+                    print("Generator is going down")
+                elif 'on' in body:
+                    generator_cmd(cmd='on')
+                    set_gen_state(True)
+                    print("Generator is going up")
+            else:
+                print(from_address + " is not in the white list")
             delete_messages()
             time.sleep(sleep_time)
         except:
