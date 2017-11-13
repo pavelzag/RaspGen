@@ -1,3 +1,4 @@
+import email
 import os.path
 import imaplib
 import logging
@@ -6,6 +7,7 @@ import time
 import datetime
 from dbconnector import set_gen_state
 from configuration import get_config, get_white_list
+from send_mail import send_mail
 import RPi.GPIO as GPIO
 
 receiver_email = get_config('email')
@@ -49,6 +51,11 @@ def get_sender():
     return ''.join(re.findall(r'<(.+?)>', header_data))
 
 
+def get_body_word(body):
+    cut_word = re.findall(r'^.*$', body, re.MULTILINE)[3][:-1].lower()
+    return cut_word
+
+
 def get_current_time():
     ts = time.time()
     time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
@@ -70,16 +77,21 @@ if __name__ == '__main__':
         try:
             stat, cnt = msrvr.select('Inbox')
             body = get_body(cnt)
+            body_content = get_body_word(body)
             from_address = get_sender()
             if is_in_white_list(from_address):
                 print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                 logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
-                if 'off' in body:
+                if 'debug' in body_content:
+                    print("Debugging Message")
+                    logging.info("Debugging Message")
+                    send_mail("Debug message")
+                elif 'off' in body_content:
                     generator_cmd(cmd='off')
                     set_gen_state(True)
                     print("Generator is going down")
                     logging.info("Generator is going down")
-                elif 'on' in body:
+                elif 'on' in body_content:
                     generator_cmd(cmd='on')
                     set_gen_state(True)
                     print("Generator is going up")
