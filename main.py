@@ -75,12 +75,12 @@ if __name__ == '__main__':
                 print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                 logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                 if 'off' in body:
-                    # generator_cmd(cmd='off')
+                    generator_cmd(cmd='off')
                     set_gen_state(True)
                     print("Generator is going down")
                     logging.info("Generator is going down")
                 elif 'on' in body:
-                    # generator_cmd(cmd='on')
+                    generator_cmd(cmd='on')
                     set_gen_state(True)
                     print("Generator is going up")
                     logging.info("Generator is going up")
