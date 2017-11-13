@@ -6,13 +6,13 @@ import time
 import datetime
 from dbconnector import set_gen_state
 from configuration import get_config, get_white_list
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
 
 receiver_email = get_config('email')
 receiver_password = get_config('password')
 sleep_time = int(get_config('sleep_time'))
-ts = time.time()
-time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+# ts = time.time()
+# time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 dir_path = os.path.dirname(os.path.realpath(__file__))
 file_logging_path = os.path.join(dir_path, 'generator.log')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
@@ -20,16 +20,16 @@ logging.basicConfig(filename=file_logging_path,level=logging.INFO)
 pin = 2
 
 
-def generator_cmd(cmd):
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
-
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, GPIO.HIGH)
-    if cmd == 'on':
-        GPIO.output(pin, False)
-    elif cmd == 'off':
-        GPIO.output(pin, True)
+# def generator_cmd(cmd):
+#     GPIO.setmode(GPIO.BCM)
+#     GPIO.setwarnings(False)
+#
+#     GPIO.setup(pin, GPIO.OUT)
+#     GPIO.output(pin, GPIO.HIGH)
+#     if cmd == 'on':
+#         GPIO.output(pin, False)
+#     elif cmd == 'off':
+#         GPIO.output(pin, True)
 
 
 def delete_messages():
@@ -51,6 +51,12 @@ def get_sender():
     return ''.join(re.findall(r'<(.+?)>', header_data))
 
 
+def get_current_time():
+    ts = time.time()
+    time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    return time_stamp
+
+
 def is_in_white_list(from_address):
     if from_address in get_white_list():
         return True
@@ -68,15 +74,15 @@ if __name__ == '__main__':
             body = get_body(cnt)
             from_address = get_sender()
             if is_in_white_list(from_address):
-                print("{} {} {}".format(time_stamp, from_address, "is in the white list"))
-                logging.info("{} {} {}".format(time_stamp, from_address, "is in the white list"))
+                print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
+                logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                 if 'off' in body:
-                    generator_cmd(cmd='off')
+                    # generator_cmd(cmd='off')
                     set_gen_state(True)
                     print("Generator is going down")
                     logging.info("Generator is going down")
                 elif 'on' in body:
-                    generator_cmd(cmd='on')
+                    # generator_cmd(cmd='on')
                     set_gen_state(True)
                     print("Generator is going up")
                     logging.info("Generator is going up")
@@ -86,8 +92,8 @@ if __name__ == '__main__':
             delete_messages()
             time.sleep(sleep_time)
         except:
-            print("{} {}".format(time_stamp, "No mails"))
-            logging.info("{} {}".format(time_stamp, "No mails"))
+            print("{} {}".format(get_current_time(), "No mails"))
+            logging.info("{} {}".format(get_current_time(), "No mails"))
             time.sleep(sleep_time)
     msrvr.close()
     msrvr.logout()
