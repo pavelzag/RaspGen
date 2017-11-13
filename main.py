@@ -1,4 +1,5 @@
 import imaplib
+import logging
 import re
 import time
 from dbconnector import set_gen_state
@@ -59,20 +60,25 @@ if __name__ == '__main__':
             from_address = get_sender()
             if is_in_white_list(from_address):
                 print(from_address + " is in the white list")
+                logging.info(from_address + " is in the white list")
                 if 'off' in body:
                     generator_cmd(cmd='off')
                     set_gen_state(True)
                     print("Generator is going down")
+                    logging.info("Generator is going down")
                 elif 'on' in body:
                     generator_cmd(cmd='on')
                     set_gen_state(True)
                     print("Generator is going up")
+                    logging.info("Generator is going up")
             else:
                 print(from_address + " is not in the white list")
+                (from_address + " is not in the white list")
             delete_messages()
             time.sleep(sleep_time)
         except:
             print('no mails')
+            logging.info("No mails")
             time.sleep(sleep_time)
     msrvr.close()
     msrvr.logout()
