@@ -6,13 +6,11 @@ import time
 import datetime
 from dbconnector import set_gen_state
 from configuration import get_config, get_white_list
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 receiver_email = get_config('email')
 receiver_password = get_config('password')
 sleep_time = int(get_config('sleep_time'))
-# ts = time.time()
-# time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 dir_path = os.path.dirname(os.path.realpath(__file__))
 file_logging_path = os.path.join(dir_path, 'generator.log')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
@@ -20,16 +18,16 @@ logging.basicConfig(filename=file_logging_path,level=logging.INFO)
 pin = 2
 
 
-# def generator_cmd(cmd):
-#     GPIO.setmode(GPIO.BCM)
-#     GPIO.setwarnings(False)
-#
-#     GPIO.setup(pin, GPIO.OUT)
-#     GPIO.output(pin, GPIO.HIGH)
-#     if cmd == 'on':
-#         GPIO.output(pin, False)
-#     elif cmd == 'off':
-#         GPIO.output(pin, True)
+def generator_cmd(cmd):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+
+    GPIO.setup(pin, GPIO.OUT)
+    GPIO.output(pin, GPIO.HIGH)
+    if cmd == 'on':
+        GPIO.output(pin, False)
+    elif cmd == 'off':
+        GPIO.output(pin, True)
 
 
 def delete_messages():
