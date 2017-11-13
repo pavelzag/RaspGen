@@ -1,7 +1,9 @@
+import os.path
 import imaplib
 import logging
 import re
 import time
+import datetime
 from dbconnector import set_gen_state
 from configuration import get_config, get_white_list
 import RPi.GPIO as GPIO
@@ -9,6 +11,12 @@ import RPi.GPIO as GPIO
 receiver_email = get_config('email')
 receiver_password = get_config('password')
 sleep_time = int(get_config('sleep_time'))
+ts = time.time()
+time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+dir_path = os.path.dirname(os.path.realpath(__file__))
+file_logging_path = os.path.join(dir_path, 'generator.log')
+logging.basicConfig(filename=file_logging_path,level=logging.INFO)
+
 pin = 2
 
 
@@ -49,6 +57,7 @@ def is_in_white_list(from_address):
     else:
         return False
 
+
 if __name__ == '__main__':
     msrvr = imaplib.IMAP4_SSL('imap.gmail.com', 993)
     msrvr.login(receiver_email, receiver_password)
@@ -59,8 +68,8 @@ if __name__ == '__main__':
             body = get_body(cnt)
             from_address = get_sender()
             if is_in_white_list(from_address):
-                print(from_address + " is in the white list")
-                logging.info(from_address + " is in the white list")
+                print("{} {} {}".format(time_stamp, from_address, "is in the white list"))
+                logging.info("{} {} {}".format(time_stamp, from_address, "is in the white list"))
                 if 'off' in body:
                     generator_cmd(cmd='off')
                     set_gen_state(True)
@@ -72,13 +81,13 @@ if __name__ == '__main__':
                     print("Generator is going up")
                     logging.info("Generator is going up")
             else:
-                print(from_address + " is not in the white list")
-                (from_address + " is not in the white list")
+                print("{} {}".format(from_address,"is not in the white list"))
+                logging.info("{} {}".format(from_address,"is not in the white list"))
             delete_messages()
             time.sleep(sleep_time)
         except:
-            print('no mails')
-            logging.info("No mails")
+            print("{} {}".format(time_stamp, "No mails"))
+            logging.info("{} {}".format(time_stamp, "No mails"))
             time.sleep(sleep_time)
     msrvr.close()
     msrvr.logout()
