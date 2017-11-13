@@ -8,6 +8,6 @@ def get_config(parameter_name):
 
 
 def get_white_list():
-    with open("config.yml", 'r') as ymlfile:
+    with open("/home/dietpi/RaspGenWithEmail/config.yml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
     return cfg['white_list']
