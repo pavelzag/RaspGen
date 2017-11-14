@@ -2,6 +2,7 @@ import os.path
 import imaplib
 import logging
 import re
+import socket
 import time
 import datetime
 from dbconnector import set_gen_state
@@ -69,6 +70,11 @@ def is_in_white_list(from_address):
 
 
 if __name__ == '__main__':
+    ip_address = socket.gethostbyname(socket.gethostname())
+    msg = '{} {}'.format('Machine runs on', ip_address)
+    print('{} {}'.format('Machine runs on', ip_address))
+    logging.info('{} {}'.format('Machine runs on', ip_address))
+    send_mail(msg)
     i = 1
     while i == 1:
         try:
