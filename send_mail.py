@@ -1,5 +1,5 @@
 import smtplib
-from configuration import get_config, get_white_list
+from configuration import get_config
 
 server = smtplib.SMTP('smtp.gmail.com', 587)
 server.ehlo()

@@ -1,4 +1,3 @@
-import email
 import os.path
 import imaplib
 import logging
@@ -70,40 +69,44 @@ def is_in_white_list(from_address):
 
 
 if __name__ == '__main__':
-    msrvr = imaplib.IMAP4_SSL('imap.gmail.com', 993)
-    msrvr.login(receiver_email, receiver_password)
     i = 1
     while i == 1:
         try:
-            stat, cnt = msrvr.select('Inbox')
-            body = get_body(cnt)
-            body_content = get_body_word(body)
-            from_address = get_sender()
-            if is_in_white_list(from_address):
-                print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
-                logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
-                if 'debug' in body_content:
-                    print("Debugging Message")
-                    logging.info("Debugging Message")
-                    send_mail("Debug message")
-                elif 'off' in body_content:
-                    generator_cmd(cmd='off')
-                    set_gen_state(True)
-                    print("Generator is going down")
-                    logging.info("Generator is going down")
-                elif 'on' in body_content:
-                    generator_cmd(cmd='on')
-                    set_gen_state(True)
-                    print("Generator is going up")
-                    logging.info("Generator is going up")
+            msrvr = imaplib.IMAP4_SSL('imap.gmail.com', 993)
+            login_stat, login_message = msrvr.login(receiver_email, receiver_password)
+            if login_stat == 'OK':
+                logging.info(login_message)
+                stat, cnt = msrvr.select('Inbox')
+                body = get_body(cnt)
+                body_content = get_body_word(body)
+                from_address = get_sender()
+                if is_in_white_list(from_address):
+                    print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
+                    logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
+                    if 'debug' in body_content:
+                        print("Debugging Message")
+                        logging.info("{} {}". format(get_current_time(),"Debug message is being sent out"))
+                        send_mail("Debug message")
+                    elif 'off' in body_content:
+                        generator_cmd(cmd='off')
+                        set_gen_state(True)
+                        print("Generator is going down")
+                        logging.info("{} {}". format(get_current_time(),"Generator is going down"))
+                    elif 'on' in body_content:
+                        generator_cmd(cmd='on')
+                        set_gen_state(True)
+                        print("Generator is going up")
+                        logging.info("{} {}". format(get_current_time(),"Generator is going up"))
+                else:
+                    print("{} {}".format(from_address,"is not in the white list"))
+                    logging.info("{} {}".format(from_address,"is not in the white list"))
+                delete_messages()
+                time.sleep(sleep_time)
             else:
-                print("{} {}".format(from_address,"is not in the white list"))
-                logging.info("{} {}".format(from_address,"is not in the white list"))
-            delete_messages()
-            time.sleep(sleep_time)
+                print("{} {}".format("Connection failed due to", login_message))
         except:
             print("{} {}".format(get_current_time(), "No mails"))
             logging.info("{} {}".format(get_current_time(), "No mails"))
             time.sleep(sleep_time)
-    msrvr.close()
-    msrvr.logout()
+    # msrvr.close()
+    # msrvr.logout()
