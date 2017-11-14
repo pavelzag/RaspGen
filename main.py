@@ -109,7 +109,7 @@ if __name__ == '__main__':
                         send_mail(recipient=from_address, msg=debug_message)
                     elif 'off' in body_content:
                         generator_cmd(cmd='off')
-                        set_gen_state(True)
+                        set_gen_state(False)
                         print(down_message)
                         logging.info("{} {}". format(get_current_time(), down_message))
                         send_mail(recipient=from_address, msg=down_message)
