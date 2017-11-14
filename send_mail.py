@@ -10,5 +10,5 @@ sender_password = get_config('password')
 server.login(sender_email, sender_password)
 
 
-def send_mail(msg = "Hi"):
-    server.sendmail(sender_email, "zagalsky@gmail.com", msg)
+def send_mail(recipient='zagalsky@gmail.com', msg="Hi"):
+    server.sendmail(sender_email, recipient, msg)

@@ -1,13 +1,13 @@
-import os.path
-import imaplib
-import logging
-import re
-import socket
-import time
-import datetime
 from dbconnector import set_gen_state
 from configuration import get_config, get_white_list
 from send_mail import send_mail
+import datetime
+import imaplib
+import logging
+import os.path
+import re
+import socket
+import time
 import RPi.GPIO as GPIO
 
 receiver_email = get_config('email')
@@ -16,7 +16,9 @@ sleep_time = int(get_config('sleep_time'))
 dir_path = os.path.dirname(os.path.realpath(__file__))
 file_logging_path = os.path.join(dir_path, 'generator.log')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
-
+down_message = 'Generator is going down'
+up_message = 'Generator is going up'
+debug_message = 'Debugging message'
 pin = 2
 
 
@@ -38,6 +40,18 @@ def delete_messages():
     for num in data[0].split():
        msrvr.store(num, '+FLAGS', '\\Deleted')
     msrvr.expunge()
+
+
+def get_machine_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
 
 
 def get_body(cnt):
@@ -70,11 +84,11 @@ def is_in_white_list(from_address):
 
 
 if __name__ == '__main__':
-    ip_address = socket.gethostbyname(socket.gethostname())
+    ip_address = get_machine_ip()
     msg = '{} {}'.format('Machine runs on', ip_address)
     print('{} {}'.format('Machine runs on', ip_address))
     logging.info('{} {}'.format('Machine runs on', ip_address))
-    send_mail(msg)
+    send_mail(recipient='zagalsky@gmail.com', msg=msg)
     i = 1
     while i == 1:
         try:
@@ -90,19 +104,21 @@ if __name__ == '__main__':
                     print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                     logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                     if 'debug' in body_content:
-                        print("Debugging Message")
-                        logging.info("{} {}". format(get_current_time(),"Debug message is being sent out"))
-                        send_mail("Debug message")
+                        print(debug_message)
+                        logging.info("{} {}". format(get_current_time(), debug_message))
+                        send_mail(recipient=from_address, msg=debug_message)
                     elif 'off' in body_content:
                         generator_cmd(cmd='off')
                         set_gen_state(True)
-                        print("Generator is going down")
-                        logging.info("{} {}". format(get_current_time(),"Generator is going down"))
+                        print(down_message)
+                        logging.info("{} {}". format(get_current_time(), down_message))
+                        send_mail(recipient=from_address, msg=down_message)
                     elif 'on' in body_content:
                         generator_cmd(cmd='on')
                         set_gen_state(True)
-                        print("Generator is going up")
-                        logging.info("{} {}". format(get_current_time(),"Generator is going up"))
+                        print(up_message)
+                        logging.info("{} {}". format(get_current_time(), up_message))
+                        send_mail(recipient=from_address,msg=up_message)
                 else:
                     print("{} {}".format(from_address,"is not in the white list"))
                     logging.info("{} {}".format(from_address,"is not in the white list"))
