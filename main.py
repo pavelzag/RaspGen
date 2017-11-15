@@ -2,6 +2,7 @@ from dbconnector import set_gen_state
 from configuration import get_config, get_white_list
 from send_mail import send_mail
 import datetime
+import email
 import imaplib
 import logging
 import os.path
@@ -54,9 +55,16 @@ def get_machine_ip():
     return IP
 
 
-def get_body(cnt):
-    cnt, data = msrvr.fetch(cnt[0], '(UID BODY[TEXT])')
-    return data[0][1]
+def get_key_command(cnt):
+    count, data = msrvr.fetch(cnt[0], '(UID BODY[TEXT])')
+    for i in cnt:
+        typ, msg_data = msrvr.fetch(str(i), '(RFC822)')
+        for response_part in msg_data:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_string(response_part[1])
+    body = get_body_word(data[0][1])
+    subject = msg['subject']
+    return subject, body
 
 
 def get_sender():
@@ -76,8 +84,8 @@ def get_current_time():
     return time_stamp
 
 
-def is_in_white_list(from_address):
-    if from_address in get_white_list():
+def is_in_white_list(mail_sender):
+    if mail_sender in get_white_list():
         return True
     else:
         return False
@@ -85,10 +93,10 @@ def is_in_white_list(from_address):
 
 if __name__ == '__main__':
     ip_address = get_machine_ip()
-    msg = '{} {}'.format('Machine runs on', ip_address)
-    print('{} {}'.format('Machine runs on', ip_address))
-    logging.info('{} {}'.format('Machine runs on', ip_address))
-    send_mail(send_to='zagalsky@gmail.com', text=msg)
+    startup_msg = '{} {}'.format('Machine runs on', ip_address)
+    print(startup_msg)
+    logging.info(startup_msg)
+    send_mail(send_to='zagalsky@gmail.com', text=startup_msg)
     i = 1
     while i == 1:
         try:
@@ -97,33 +105,37 @@ if __name__ == '__main__':
             if login_stat == 'OK':
                 logging.info(login_message)
                 stat, cnt = msrvr.select('Inbox')
-                body = get_body(cnt)
-                body_content = get_body_word(body)
+                key_command = get_key_command(cnt)
                 from_address = get_sender()
                 if is_in_white_list(from_address):
                     print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                     logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
-                    if 'debug' in body_content:
+                    if 'debug' in key_command:
                         print(debug_message)
                         logging.info("{} {}". format(get_current_time(), debug_message))
                         send_mail(send_to=from_address, text=debug_message)
-                    elif 'off' in body_content:
+                    elif 'off' in key_command:
                         generator_cmd(cmd='off')
                         set_gen_state(False)
                         print(down_message)
                         logging.info("{} {}". format(get_current_time(), down_message))
                         send_mail(send_to=from_address, text=down_message)
-                    elif 'on' in body_content:
+                    elif 'on' in key_command:
                         generator_cmd(cmd='on')
                         set_gen_state(True)
                         print(up_message)
                         logging.info("{} {}". format(get_current_time(), up_message))
                         send_mail(send_to=from_address, text=up_message)
-                    elif 'log' in body_content:
+                    elif 'log' in key_command:
                         log_message = '{} {}'.format('sending logs to', from_address)
                         print(log_message)
                         logging.info("{} {}". format(get_current_time(), log_message))
                         send_mail(send_to=from_address, text=log_message, file=file_logging_path)
+                    else:
+                        log_message = '{} {}'.format(''.join(key_command), 'is an unknown command')
+                        print(log_message)
+                        logging.info("{} {}".format(get_current_time(), log_message))
+                        send_mail(send_to=from_address, text=log_message)
                 else:
                     print("{} {}".format(from_address,"is not in the white list"))
                     logging.info("{} {}".format(from_address,"is not in the white list"))
