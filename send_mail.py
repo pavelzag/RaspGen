@@ -4,17 +4,7 @@ from os.path import basename
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import COMMASPACE, formatdate
-
-
-# def send_mail(recipient='zagalsky@gmail.com', msg="Hi"):
-#     server = smtplib.SMTP('smtp.gmail.com', 587)
-#     server.ehlo()
-#     server.starttls()
-#     sender_email = get_config('email')
-#     sender_password = get_config('password')
-#     server.login(sender_email, sender_password)
-#     server.sendmail(sender_email, recipient, msg)
+from email.utils import formatdate
 
 
 def send_mail(send_from = 'zagalsky@gmail.com', send_to='', subject='hi', text='text', file=None,
@@ -26,7 +16,7 @@ def send_mail(send_from = 'zagalsky@gmail.com', send_to='', subject='hi', text='
     msg['Subject'] = subject
 
     msg.attach(MIMEText(text))
-    if file != None:
+    if file is not None:
         with open(file, "rb") as fil:
             part = MIMEApplication(
                 fil.read(),

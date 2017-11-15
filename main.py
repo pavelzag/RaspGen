@@ -8,7 +8,7 @@ import os.path
 import re
 import socket
 import time
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 receiver_email = get_config('email')
 receiver_password = get_config('password')
@@ -22,16 +22,16 @@ debug_message = 'Debugging message'
 pin = 2
 
 
-# def generator_cmd(cmd):
-#     GPIO.setmode(GPIO.BCM)
-#     GPIO.setwarnings(False)
-#
-#     GPIO.setup(pin, GPIO.OUT)
-#     GPIO.output(pin, GPIO.HIGH)
-#     if cmd == 'on':
-#         GPIO.output(pin, False)
-#     elif cmd == 'off':
-#         GPIO.output(pin, True)
+def generator_cmd(cmd):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+
+    GPIO.setup(pin, GPIO.OUT)
+    GPIO.output(pin, GPIO.HIGH)
+    if cmd == 'on':
+        GPIO.output(pin, False)
+    elif cmd == 'off':
+        GPIO.output(pin, True)
 
 
 def delete_messages():
@@ -108,14 +108,14 @@ if __name__ == '__main__':
                         logging.info("{} {}". format(get_current_time(), debug_message))
                         send_mail(send_to=from_address, text=debug_message)
                     elif 'off' in body_content:
-                        # generator_cmd(cmd='off')
-                        # set_gen_state(False)
+                        generator_cmd(cmd='off')
+                        set_gen_state(False)
                         print(down_message)
                         logging.info("{} {}". format(get_current_time(), down_message))
                         send_mail(send_to=from_address, text=down_message)
                     elif 'on' in body_content:
-                        # generator_cmd(cmd='on')
-                        # set_gen_state(True)
+                        generator_cmd(cmd='on')
+                        set_gen_state(True)
                         print(up_message)
                         logging.info("{} {}". format(get_current_time(), up_message))
                         send_mail(send_to=from_address, text=up_message)
