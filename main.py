@@ -1,4 +1,4 @@
-from dbconnector import set_gen_state
+from dbconnector import set_gen_state, get_gen_state, set_initial_db_state
 from configuration import get_config, get_white_list
 from send_mail import send_mail
 import datetime
@@ -15,7 +15,7 @@ receiver_email = get_config('email')
 receiver_password = get_config('password')
 sleep_time = int(get_config('sleep_time'))
 dir_path = os.path.dirname(os.path.realpath(__file__))
-file_logging_path = os.path.join(dir_path, 'generator.log')
+file_logging_path = os.path.join(dir_path, 'generator.txt')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
 down_message = 'Generator is going down'
 up_message = 'Generator is going up'
@@ -97,6 +97,9 @@ if __name__ == '__main__':
     print(startup_msg)
     logging.info(startup_msg)
     send_mail(send_to='zagalsky@gmail.com', text=startup_msg)
+    set_initial_db_state()
+    start_time = None
+    end_time = None
     i = 1
     while i == 1:
         try:
@@ -108,6 +111,7 @@ if __name__ == '__main__':
                 key_command = get_key_command(cnt)
                 from_address = get_sender()
                 if is_in_white_list(from_address):
+                    current_state = str(get_gen_state())
                     print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                     logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
                     if 'debug' in key_command:
@@ -115,17 +119,31 @@ if __name__ == '__main__':
                         logging.info("{} {}". format(get_current_time(), debug_message))
                         send_mail(send_to=from_address, text=debug_message)
                     elif 'off' in key_command:
-                        generator_cmd(cmd='off')
-                        set_gen_state(False)
-                        print(down_message)
-                        logging.info("{} {}". format(get_current_time(), down_message))
-                        send_mail(send_to=from_address, text=down_message)
+                        if current_state is not 'False':
+                            generator_cmd(cmd='off')
+                            set_gen_state(state=False, time_stamp=get_current_time())
+                            print(down_message)
+                            logging.info("{} {}". format(get_current_time(), down_message))
+                            send_mail(send_to=from_address, text=down_message)
+                            end_time = datetime.datetime.now()
+                            # Add 2 minutes (??) compensation for going down
+                            time_span = end_time - start_time
+                            print('{} {}'.format('The generator was up for:', time_span))
+                            logging.info('{} {}'.format('The generator was up for:', time_span))
+                        else:
+                            print('The generator is already off')
+                            logging.info('The generator is already off')
                     elif 'on' in key_command:
-                        generator_cmd(cmd='on')
-                        set_gen_state(True)
-                        print(up_message)
-                        logging.info("{} {}". format(get_current_time(), up_message))
-                        send_mail(send_to=from_address, text=up_message)
+                        if current_state is not 'True':
+                            generator_cmd(cmd='on')
+                            set_gen_state(True, time_stamp=get_current_time())
+                            print(up_message)
+                            logging.info("{} {}". format(get_current_time(), up_message))
+                            send_mail(send_to=from_address, text=up_message)
+                            start_time = datetime.datetime.now()
+                        else:
+                            print('The generator is already on')
+                            logging.info('The generator is already on')
                     elif 'log' in key_command:
                         log_message = '{} {}'.format('sending logs to', from_address)
                         print(log_message)
