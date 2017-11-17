@@ -63,7 +63,7 @@ def get_key_command(cnt):
             if isinstance(response_part, tuple):
                 msg = email.message_from_string(response_part[1])
     body = get_body_word(data[0][1])
-    subject = msg['subject']
+    subject = msg['subject'].lower()
     return subject, body
 
 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
             msrvr = imaplib.IMAP4_SSL('imap.gmail.com', 993)
             login_stat, login_message = msrvr.login(receiver_email, receiver_password)
             if login_stat == 'OK':
-                logging.info(login_message)
+                # logging.info(login_message)
                 stat, cnt = msrvr.select('Inbox')
                 key_command = get_key_command(cnt)
                 from_address = get_sender()
