@@ -125,7 +125,7 @@ if __name__ == '__main__':
                             logging.info("{} {}". format(get_current_time(), down_message))
                             send_mail(send_to=from_address, text=down_message)
                             end_time = datetime.datetime.now()
-                            # Add 2 minutes (??) compensation for going down
+                            # Add 2 minutes (???) compensation for going down
                             time_spent = (end_time - start_time).total_seconds()
                             set_time_spent(time_spent)
                         else:
