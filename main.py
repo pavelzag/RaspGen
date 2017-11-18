@@ -24,6 +24,7 @@ pin = int(get_pin())
 
 
 def generator_cmd(cmd):
+    print('generator received a command')
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
 
