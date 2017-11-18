@@ -1,6 +1,9 @@
 creds:
-    email: dev@gmail.com
-    password: password
+    email: me@gmail.com
+    user: user
+    password: pass
     sleep_time: 5
 white_list:
-    bro@gmail.com, sis@gmail.com
+    me@gmail.com, you@gmail.com
+pin:
+    2

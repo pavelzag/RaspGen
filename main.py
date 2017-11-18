@@ -1,5 +1,5 @@
 from dbconnector import set_gen_state, get_gen_state, set_initial_db_state
-from configuration import get_config, get_white_list
+from configuration import get_config, get_white_list, get_pin
 from send_mail import send_mail
 import datetime
 import email
@@ -9,7 +9,7 @@ import os.path
 import re
 import socket
 import time
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
 
 receiver_email = get_config('email')
 receiver_password = get_config('password')
@@ -20,19 +20,19 @@ logging.basicConfig(filename=file_logging_path,level=logging.INFO)
 down_message = 'Generator is going down'
 up_message = 'Generator is going up'
 debug_message = 'Debugging message'
-pin = 2
+pin = int(get_pin())
 
 
-def generator_cmd(cmd):
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
-
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, GPIO.HIGH)
-    if cmd == 'on':
-        GPIO.output(pin, False)
-    elif cmd == 'off':
-        GPIO.output(pin, True)
+# def generator_cmd(cmd):
+#     GPIO.setmode(GPIO.BCM)
+#     GPIO.setwarnings(False)
+#
+#     GPIO.setup(pin, GPIO.OUT)
+#     GPIO.output(pin, GPIO.HIGH)
+#     if cmd == 'on':
+#         GPIO.output(pin, False)
+#     elif cmd == 'off':
+#         GPIO.output(pin, True)
 
 
 def delete_messages():
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                         send_mail(send_to=from_address, text=debug_message)
                     elif 'off' in key_command:
                         if current_state is not 'False':
-                            generator_cmd(cmd='off')
+                            # generator_cmd(cmd='off')
                             set_gen_state(state=False, time_stamp=get_current_time())
                             print(down_message)
                             logging.info("{} {}". format(get_current_time(), down_message))
@@ -135,7 +135,7 @@ if __name__ == '__main__':
                             logging.info('The generator is already off')
                     elif 'on' in key_command:
                         if current_state is not 'True':
-                            generator_cmd(cmd='on')
+                            # generator_cmd(cmd='on')
                             set_gen_state(True, time_stamp=get_current_time())
                             print(up_message)
                             logging.info("{} {}". format(get_current_time(), up_message))

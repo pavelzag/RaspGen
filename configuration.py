@@ -13,3 +13,6 @@ def get_config(parameter_name):
 
 def get_white_list():
     return cfg['white_list']
+
+def get_pin():
+    return cfg['pin']
