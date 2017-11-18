@@ -24,12 +24,15 @@ pin = int(get_pin())
 
 
 def generator_cmd(cmd):
-    print('generator received a command')
+    print('generator received a command1')
     GPIO.setmode(GPIO.BCM)
+    print('generator received a command2')
     GPIO.setwarnings(False)
-
+    print('generator received a command3')
     GPIO.setup(pin, GPIO.OUT)
+    print('generator received a command4')
     GPIO.output(pin, GPIO.HIGH)
+    print('generator received a command5')
     if cmd == 'on':
         logging.info('{} {}'.format(pin, False))
         GPIO.output(pin, False)
