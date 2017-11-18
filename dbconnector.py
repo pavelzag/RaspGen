@@ -27,6 +27,12 @@ def set_gen_state(state, time_stamp):
             # return bool(document['state'])
 
 
+def set_time_spent(time_span):
+    db.generator_state.insert_one({"time_span": time_span})
+    print('{} {}'.format('The generator was up for:', time_span))
+    logging.info('{} {}'.format('The generator was up for:', time_span))
+
+
 def get_gen_state():
     print('getting generator status')
     cursor = db.generator_state.find({})

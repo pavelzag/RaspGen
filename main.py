@@ -1,4 +1,4 @@
-from dbconnector import set_gen_state, get_gen_state, set_initial_db_state
+from dbconnector import set_gen_state, get_gen_state, set_initial_db_state, set_time_spent
 from configuration import get_config, get_white_list, get_pin
 from send_mail import send_mail
 import datetime
@@ -30,8 +30,10 @@ def generator_cmd(cmd):
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin, GPIO.HIGH)
     if cmd == 'on':
+        logging.info('{} {}'.format(pin, False))
         GPIO.output(pin, False)
     elif cmd == 'off':
+        logging.info('{} {}'.format(pin, True))
         GPIO.output(pin, True)
 
 
@@ -127,9 +129,8 @@ if __name__ == '__main__':
                             send_mail(send_to=from_address, text=down_message)
                             end_time = datetime.datetime.now()
                             # Add 2 minutes (??) compensation for going down
-                            time_span = end_time - start_time
-                            print('{} {}'.format('The generator was up for:', time_span))
-                            logging.info('{} {}'.format('The generator was up for:', time_span))
+                            time_spent = (end_time - start_time).total_seconds()
+                            set_time_spent(time_spent)
                         else:
                             print('The generator is already off')
                             logging.info('The generator is already off')
