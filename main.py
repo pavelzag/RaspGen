@@ -21,24 +21,16 @@ down_message = 'Generator is going down'
 up_message = 'Generator is going up'
 debug_message = 'Debugging message'
 pin = int(get_pin())
-print('{} {}'.format('Selected pin is', pin))
 
 
 def generator_cmd(cmd):
-    print('generator received a command1')
     GPIO.setmode(GPIO.BCM)
-    print('generator received a command2')
     GPIO.setwarnings(False)
-    print('generator received a command3')
     GPIO.setup(pin, GPIO.OUT)
-    print('generator received a command4')
     GPIO.output(pin, GPIO.HIGH)
-    print('generator received a command5')
     if cmd == 'on':
-        logging.info('{} {}'.format(pin, False))
         GPIO.output(pin, False)
     elif cmd == 'off':
-        logging.info('{} {}'.format(pin, True))
         GPIO.output(pin, True)
 
 
