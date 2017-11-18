@@ -21,6 +21,7 @@ down_message = 'Generator is going down'
 up_message = 'Generator is going up'
 debug_message = 'Debugging message'
 pin = int(get_pin())
+print('{} {}'.format('Selected pin is', pin))
 
 
 def generator_cmd(cmd):
