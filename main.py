@@ -114,7 +114,6 @@ def logging_handler(msg):
 
 
 if __name__ == '__main__':
-    # test_time = calculate_time_span(120)
     ip_address = get_machine_ip()
     startup_msg = '{} {}'.format('Machine runs on', ip_address)
     print(startup_msg)
@@ -145,7 +144,7 @@ if __name__ == '__main__':
                         if current_state is not 'down':
                             if uname()[1] == 'DietPi':
                             # if uname_debug == 'DietPi':
-                                # generator_cmd(cmd='off')
+                                generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
                                 print(down_msg)
                                 logging.info("{} {}". format(get_current_time(), down_msg))
@@ -162,7 +161,7 @@ if __name__ == '__main__':
                         if current_state is not 'up':
                             if uname()[1] == 'DietPi':
                             # if uname_debug == 'DietPi':
-                                # generator_cmd(cmd='on')
+                                generator_cmd(cmd='on')
                                 set_gen_state(True, time_stamp=get_current_time())
                                 msg = "{} {}". format(get_current_time(), up_msg)
                                 logging_handler(msg)
