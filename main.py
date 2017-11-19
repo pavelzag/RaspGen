@@ -5,19 +5,18 @@ import datetime
 import email
 import imaplib
 import logging
-import os.path
+from os import path, uname
 import re
 import socket
 import time
-import RPi.GPIO as GPIO
 
 imap_addr = 'imap.gmail.com'
 imap_port = 993
 receiver_email = get_config('email')
 receiver_password = get_config('password')
 sleep_time = int(get_config('sleep_time'))
-dir_path = os.path.dirname(os.path.realpath(__file__))
-file_logging_path = os.path.join(dir_path, 'generator.txt')
+dir_path = path.dirname(path.realpath(__file__))
+file_logging_path = path.join(dir_path, 'generator.txt')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
 down_msg = 'Generator is going down'
 up_msg = 'Generator is going up'
@@ -30,6 +29,7 @@ pin = int(get_pin())
 
 
 def generator_cmd(cmd):
+    import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     GPIO.setup(pin, GPIO.OUT)
@@ -38,6 +38,7 @@ def generator_cmd(cmd):
         GPIO.output(pin, False)
     elif cmd == 'off':
         GPIO.output(pin, True)
+
 
 
 def delete_messages():
@@ -106,7 +107,7 @@ if __name__ == '__main__':
     startup_msg = '{} {}'.format('Machine runs on', ip_address)
     print(startup_msg)
     logging.info(startup_msg)
-    send_mail(send_to='zagalsky@gmail.com', text=startup_msg)
+    send_mail(send_to='zagalsky@gmail.com',subject='Start up Message', text=startup_msg)
     set_initial_db_state()
     start_time = None
     end_time = None
@@ -126,34 +127,44 @@ if __name__ == '__main__':
                     if 'debug' in key_command:
                         print(debug_message)
                         logging.info("{} {}". format(get_current_time(), debug_message))
-                        send_mail(send_to=from_address, text=debug_message)
+                        send_mail(send_to=from_address, subject='Debug Message', text=debug_message)
                     elif 'off' in key_command:
                         if current_state is not 'False':
-                            generator_cmd(cmd='off')
-                            set_gen_state(state=False, time_stamp=get_current_time())
-                            print(down_msg)
-                            logging.info("{} {}". format(get_current_time(), down_msg))
-                            send_mail(send_to=from_address, text=down_msg)
-                            end_time = datetime.datetime.now()
-                            # Add 2 minutes (???) compensation for going down
-                            time_spent = (end_time - start_time).total_seconds()
-                            set_time_spent(time_spent)
+                            if uname()[1] == 'DietPi':
+                                generator_cmd(cmd='off')
+                                set_gen_state(state=False, time_stamp=get_current_time())
+                                print(down_msg)
+                                logging.info("{} {}". format(get_current_time(), down_msg))
+                                send_mail(send_to=from_address, subject='Generator Control Message', text=down_msg)
+                                end_time = datetime.datetime.now()
+                                # Add 2 minutes (???) compensation for going down
+                                time_spent = (end_time - start_time).total_seconds()
+                                set_time_spent(time_spent)
+                            else:
+                                logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
                             logging_handler(already_down_msg)
                     elif 'on' in key_command:
                         if current_state is not 'True':
-                            generator_cmd(cmd='on')
-                            set_gen_state(True, time_stamp=get_current_time())
-                            msg = "{} {}". format(get_current_time(), up_msg)
-                            logging_handler(msg)
-                            send_mail(send_to=from_address, text=up_msg)
-                            start_time = datetime.datetime.now()
+                            if uname()[1] == 'DietPi':
+                                generator_cmd(cmd='on')
+                                set_gen_state(True, time_stamp=get_current_time())
+                                msg = "{} {}". format(get_current_time(), up_msg)
+                                logging_handler(msg)
+                                send_mail(send_to=from_address, subject='Generator Control Message', text=up_msg)
+                                start_time = datetime.datetime.now()
+                            else:
+                                logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
                             logging_handler(already_up_msg)
                     elif 'log' in key_command:
                         msg = '{} {} {}'.format(get_current_time(), 'sending logs to', from_address)
                         logging_handler(msg)
-                        send_mail(send_to=from_address, text=msg, file=file_logging_path)
+                        send_mail(send_to=from_address, subject='Log Message', text='Logs attached', file=file_logging_path)
+                    elif 'status' in key_command:
+                        msg = '{} {}'.format('Generator is', current_state)
+                        logging_handler(msg)
+                        send_mail(send_to=from_address, subject='Status Message', text=msg)
                     else:
                         msg = '{} {} {}'.format(get_current_time(), ''.join(key_command), 'is an unknown command')
                         logging_handler(msg)

@@ -34,8 +34,12 @@ def set_time_spent(time_span):
 
 
 def get_gen_state():
-    print('getting generator status')
+    print('Getting generator status')
     cursor = db.generator_state.find({})
     for document in cursor:
-        print'The generator status is: ' + str(document['state'])
-        return str(document['state'])
+        if document['state'] is False:
+            gen_state = 'down'
+        else:
+            gen_state = 'up'
+        print('{} {}'.format('Generator status is:', gen_state))
+        return gen_state
