@@ -40,7 +40,6 @@ def generator_cmd(cmd):
         GPIO.output(pin, True)
 
 
-
 def delete_messages():
     msrvr.select('Inbox')
     typ, data = msrvr.search(None, 'ALL')
@@ -71,6 +70,10 @@ def get_key_command(cnt):
     body = get_body_word(data[0][1])
     subject = msg['subject'].lower()
     return subject, body
+
+
+def get_if_same_status():
+    pass
 
 
 def get_sender():
@@ -129,8 +132,8 @@ if __name__ == '__main__':
                         logging.info("{} {}". format(get_current_time(), debug_message))
                         send_mail(send_to=from_address, subject='Debug Message', text=debug_message)
                     elif 'off' in key_command:
-                        if current_state is not 'False':
-                            if uname()[1] == 'DietPi':
+                        if current_state is not 'down':
+                            if debug_uname == 'DietPi':
                                 generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
                                 print(down_msg)
@@ -145,8 +148,8 @@ if __name__ == '__main__':
                         else:
                             logging_handler(already_down_msg)
                     elif 'on' in key_command:
-                        if current_state is not 'True':
-                            if uname()[1] == 'DietPi':
+                        if current_state is not 'up':
+                            if debug_uname == 'DietPi':
                                 generator_cmd(cmd='on')
                                 set_gen_state(True, time_stamp=get_current_time())
                                 msg = "{} {}". format(get_current_time(), up_msg)
@@ -162,7 +165,8 @@ if __name__ == '__main__':
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Log Message', text='Logs attached', file=file_logging_path)
                     elif 'status' in key_command:
-                        msg = '{} {}'.format('Generator is', current_state)
+                        how_long = int((datetime.datetime.now() - start_time).total_seconds())
+                        msg = '{} {} {} {} {}'.format('Generator is', current_state, 'for', how_long, 'seconds')
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Status Message', text=msg)
                     else:
@@ -170,7 +174,7 @@ if __name__ == '__main__':
                         logging_handler(msg)
                         send_mail(send_to=from_address, text=msg)
                 else:
-                    msg ="{} {}".format(from_address, not_white_list)
+                    msg = '{} {}'.format(from_address, not_white_list)
                     logging_handler(msg)
                 delete_messages()
                 time.sleep(sleep_time)
