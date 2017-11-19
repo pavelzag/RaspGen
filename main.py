@@ -93,6 +93,14 @@ def get_current_time():
     return time_stamp
 
 
+def calculate_time_span(start_time):
+    time_span = (datetime.datetime.now() - start_time).total_seconds()
+    if time_span > 60:
+        return time.strftime("%M:%S", time.gmtime(time_span)), 'minutes'
+    else:
+        return int(time_span), 'seconds'
+
+
 def is_in_white_list(mail_sender):
     if mail_sender in get_white_list():
         return True
@@ -106,6 +114,7 @@ def logging_handler(msg):
 
 
 if __name__ == '__main__':
+    # test_time = calculate_time_span(120)
     ip_address = get_machine_ip()
     startup_msg = '{} {}'.format('Machine runs on', ip_address)
     print(startup_msg)
@@ -117,6 +126,7 @@ if __name__ == '__main__':
     i = 1
     while i == 1:
         try:
+            # uname_debug = 'DietPi'
             msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
             login_stat, login_message = msrvr.login(receiver_email, receiver_password)
             if login_stat == 'OK':
@@ -133,8 +143,9 @@ if __name__ == '__main__':
                         send_mail(send_to=from_address, subject='Debug Message', text=debug_message)
                     elif 'off' in key_command:
                         if current_state is not 'down':
-                            if debug_uname == 'DietPi':
-                                generator_cmd(cmd='off')
+                            if uname()[1] == 'DietPi':
+                            # if uname_debug == 'DietPi':
+                                # generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
                                 print(down_msg)
                                 logging.info("{} {}". format(get_current_time(), down_msg))
@@ -149,8 +160,9 @@ if __name__ == '__main__':
                             logging_handler(already_down_msg)
                     elif 'on' in key_command:
                         if current_state is not 'up':
-                            if debug_uname == 'DietPi':
-                                generator_cmd(cmd='on')
+                            if uname()[1] == 'DietPi':
+                            # if uname_debug == 'DietPi':
+                                # generator_cmd(cmd='on')
                                 set_gen_state(True, time_stamp=get_current_time())
                                 msg = "{} {}". format(get_current_time(), up_msg)
                                 logging_handler(msg)
@@ -165,8 +177,8 @@ if __name__ == '__main__':
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Log Message', text='Logs attached', file=file_logging_path)
                     elif 'status' in key_command:
-                        how_long = int((datetime.datetime.now() - start_time).total_seconds())
-                        msg = '{} {} {} {} {}'.format('Generator is', current_state, 'for', how_long, 'seconds')
+                        how_long, units = calculate_time_span(start_time)
+                        msg = '{} {} {} {} {}'.format('Generator is', current_state, 'for', how_long, units)
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Status Message', text=msg)
                     else:
