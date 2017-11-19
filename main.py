@@ -11,15 +11,21 @@ import socket
 import time
 import RPi.GPIO as GPIO
 
+imap_addr = 'imap.gmail.com'
+imap_port = 993
 receiver_email = get_config('email')
 receiver_password = get_config('password')
 sleep_time = int(get_config('sleep_time'))
 dir_path = os.path.dirname(os.path.realpath(__file__))
 file_logging_path = os.path.join(dir_path, 'generator.txt')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
-down_message = 'Generator is going down'
-up_message = 'Generator is going up'
+down_msg = 'Generator is going down'
+up_msg = 'Generator is going up'
+already_up_msg = 'Generator is already up'
+already_down_msg = 'Generator is already down'
 debug_message = 'Debugging message'
+not_white_list = 'is not in the white list'
+white_list = 'is in the white list'
 pin = int(get_pin())
 
 
@@ -90,6 +96,11 @@ def is_in_white_list(mail_sender):
         return False
 
 
+def logging_handler(msg):
+    print(msg)
+    logging.info(msg)
+
+
 if __name__ == '__main__':
     ip_address = get_machine_ip()
     startup_msg = '{} {}'.format('Machine runs on', ip_address)
@@ -102,7 +113,7 @@ if __name__ == '__main__':
     i = 1
     while i == 1:
         try:
-            msrvr = imaplib.IMAP4_SSL('imap.gmail.com', 993)
+            msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
             login_stat, login_message = msrvr.login(receiver_email, receiver_password)
             if login_stat == 'OK':
                 # logging.info(login_message)
@@ -111,8 +122,7 @@ if __name__ == '__main__':
                 from_address = get_sender()
                 if is_in_white_list(from_address):
                     current_state = str(get_gen_state())
-                    print("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
-                    logging.info("{} {} {}".format(get_current_time(), from_address, "is in the white list"))
+                    logging_handler("{} {} {}".format(get_current_time(), from_address, white_list))
                     if 'debug' in key_command:
                         print(debug_message)
                         logging.info("{} {}". format(get_current_time(), debug_message))
@@ -121,47 +131,44 @@ if __name__ == '__main__':
                         if current_state is not 'False':
                             generator_cmd(cmd='off')
                             set_gen_state(state=False, time_stamp=get_current_time())
-                            print(down_message)
-                            logging.info("{} {}". format(get_current_time(), down_message))
-                            send_mail(send_to=from_address, text=down_message)
+                            print(down_msg)
+                            logging.info("{} {}". format(get_current_time(), down_msg))
+                            send_mail(send_to=from_address, text=down_msg)
                             end_time = datetime.datetime.now()
                             # Add 2 minutes (???) compensation for going down
                             time_spent = (end_time - start_time).total_seconds()
                             set_time_spent(time_spent)
                         else:
-                            print('The generator is already off')
-                            logging.info('The generator is already off')
+                            logging_handler(already_down_msg)
                     elif 'on' in key_command:
                         if current_state is not 'True':
                             generator_cmd(cmd='on')
                             set_gen_state(True, time_stamp=get_current_time())
-                            print(up_message)
-                            logging.info("{} {}". format(get_current_time(), up_message))
-                            send_mail(send_to=from_address, text=up_message)
+                            msg = "{} {}". format(get_current_time(), up_msg)
+                            logging_handler(msg)
+                            send_mail(send_to=from_address, text=up_msg)
                             start_time = datetime.datetime.now()
                         else:
-                            print('The generator is already on')
-                            logging.info('The generator is already on')
+                            logging_handler(already_up_msg)
                     elif 'log' in key_command:
-                        log_message = '{} {}'.format('sending logs to', from_address)
-                        print(log_message)
-                        logging.info("{} {}". format(get_current_time(), log_message))
-                        send_mail(send_to=from_address, text=log_message, file=file_logging_path)
+                        msg = '{} {} {}'.format(get_current_time(), 'sending logs to', from_address)
+                        logging_handler(msg)
+                        send_mail(send_to=from_address, text=msg, file=file_logging_path)
                     else:
-                        log_message = '{} {}'.format(''.join(key_command), 'is an unknown command')
-                        print(log_message)
-                        logging.info("{} {}".format(get_current_time(), log_message))
-                        send_mail(send_to=from_address, text=log_message)
+                        msg = '{} {} {}'.format(get_current_time(), ''.join(key_command), 'is an unknown command')
+                        logging_handler(msg)
+                        send_mail(send_to=from_address, text=msg)
                 else:
-                    print("{} {}".format(from_address,"is not in the white list"))
-                    logging.info("{} {}".format(from_address,"is not in the white list"))
+                    msg ="{} {}".format(from_address, not_white_list)
+                    logging_handler(msg)
                 delete_messages()
                 time.sleep(sleep_time)
             else:
-                print("{} {}".format("Connection failed due to", login_message))
+                msg = "{} {}".format("Connection failed due to", login_message)
+                logging_handler(msg)
         except:
-            print("{} {}".format(get_current_time(), "No mails"))
-            logging.info("{} {}".format(get_current_time(), "No mails"))
+            msg ="{} {}".format(get_current_time(), "No mails")
+            logging_handler(msg)
             time.sleep(sleep_time)
     # msrvr.close()
     # msrvr.logout()
