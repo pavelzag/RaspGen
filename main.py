@@ -14,17 +14,18 @@ imap_addr = 'imap.gmail.com'
 imap_port = 993
 receiver_email = get_config('email')
 receiver_password = get_config('password')
+owner = get_config('owner')
 sleep_time = int(get_config('sleep_time'))
 dir_path = path.dirname(path.realpath(__file__))
 file_logging_path = path.join(dir_path, 'generator.txt')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
-down_msg = 'Generator is going down'
-up_msg = 'Generator is going up'
-already_up_msg = 'Generator is already up'
-already_down_msg = 'Generator is already down'
-debug_message = 'Debugging message'
-not_white_list = 'is not in the white list'
-white_list = 'is in the white list'
+down_msg = 'Generator is going down.'
+up_msg = 'Generator is going up.'
+already_up_msg = 'Generator is already up.'
+already_down_msg = 'Generator is already down.'
+debug_message = 'Debugging message.'
+not_white_list = 'is not in the white list.'
+white_list = 'is in the white list.'
 pin = int(get_pin())
 
 
@@ -93,8 +94,8 @@ def get_current_time():
     return time_stamp
 
 
-def calculate_time_span(start_time):
-    time_span = (datetime.datetime.now() - start_time).total_seconds()
+def calculate_time_span(time_span):
+    #TODO Add Hours
     if time_span > 60:
         return time.strftime("%M:%S", time.gmtime(time_span)), 'minutes'
     else:
@@ -118,14 +119,14 @@ if __name__ == '__main__':
     startup_msg = '{} {}'.format('Machine runs on', ip_address)
     print(startup_msg)
     logging.info(startup_msg)
-    send_mail(send_to='zagalsky@gmail.com',subject='Start up Message', text=startup_msg)
+    send_mail(send_to=owner, subject='Start up Message', text=startup_msg)
     set_initial_db_state()
     start_time = None
     end_time = None
     i = 1
     while i == 1:
         try:
-            # uname_debug = 'DietPi'
+            uname_debug = 'DietPi'
             msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
             login_stat, login_message = msrvr.login(receiver_email, receiver_password)
             if login_stat == 'OK':
@@ -146,13 +147,16 @@ if __name__ == '__main__':
                             # if uname_debug == 'DietPi':
                                 generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
-                                print(down_msg)
-                                logging.info("{} {}". format(get_current_time(), down_msg))
-                                send_mail(send_to=from_address, subject='Generator Control Message', text=down_msg)
+                                logging_handler('{} {}'. format(get_current_time(), down_msg))
                                 end_time = datetime.datetime.now()
                                 # Add 2 minutes (???) compensation for going down
-                                time_spent = (end_time - start_time).total_seconds()
-                                set_time_spent(time_spent)
+                                time_span = int((datetime.datetime.now() - start_time).total_seconds())
+                                how_long, units = calculate_time_span(time_span)
+                                msg_to_log = '{} {} {}'.format('The generator was up for:', how_long, units)
+                                logging_handler(msg_to_log)
+                                mail_msg = '{} {}'.format(down_msg, msg_to_log)
+                                send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+                                set_time_spent(time_span)
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
@@ -163,7 +167,7 @@ if __name__ == '__main__':
                             # if uname_debug == 'DietPi':
                                 generator_cmd(cmd='on')
                                 set_gen_state(True, time_stamp=get_current_time())
-                                msg = "{} {}". format(get_current_time(), up_msg)
+                                msg = '{} {}'. format(get_current_time(), up_msg)
                                 logging_handler(msg)
                                 send_mail(send_to=from_address, subject='Generator Control Message', text=up_msg)
                                 start_time = datetime.datetime.now()
@@ -174,9 +178,11 @@ if __name__ == '__main__':
                     elif 'log' in key_command:
                         msg = '{} {} {}'.format(get_current_time(), 'sending logs to', from_address)
                         logging_handler(msg)
-                        send_mail(send_to=from_address, subject='Log Message', text='Logs attached', file=file_logging_path)
+                        send_mail(send_to=from_address, subject='Log Message',
+                                  text='Logs attached', file=file_logging_path)
                     elif 'status' in key_command:
-                        how_long, units = calculate_time_span(start_time)
+                        time_span = (datetime.datetime.now() - start_time).total_seconds()
+                        how_long, units = calculate_time_span(time_span)
                         msg = '{} {} {} {} {}'.format('Generator is', current_state, 'for', how_long, units)
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Status Message', text=msg)
@@ -190,11 +196,9 @@ if __name__ == '__main__':
                 delete_messages()
                 time.sleep(sleep_time)
             else:
-                msg = "{} {}".format("Connection failed due to", login_message)
+                msg = '{} {}'.format('Connection failed due to', login_message)
                 logging_handler(msg)
         except:
-            msg ="{} {}".format(get_current_time(), "No mails")
+            msg = '{} {}'.format(get_current_time(), 'No mails')
             logging_handler(msg)
             time.sleep(sleep_time)
-    # msrvr.close()
-    # msrvr.logout()
