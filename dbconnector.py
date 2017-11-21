@@ -10,6 +10,7 @@ def set_initial_db_state():
     print('Setting db state on boot on off')
     logging.info('Setting db state on boot to off')
     db.generator_state.update_one({'_id': 'gen_state'}, {"$set": {"state": False}}, upsert=True)
+    logging.info('status set successfully')
 
 
 def set_gen_state(state, time_stamp):
