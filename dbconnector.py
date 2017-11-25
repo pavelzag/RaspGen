@@ -1,4 +1,5 @@
 import logging
+from os import path, uname
 from pymongo import MongoClient
 from configuration import get_db_creds
 
@@ -10,7 +11,10 @@ db_name = get_db_creds('db_name')
 uri = 'mongodb://' + db_user + ':' + db_password + '@' + url + '/' + db_name
 
 client = MongoClient(uri)
-db = client.raspgen_test
+if uname()[1] == 'DietPi':
+    db = client.raspgen_prod
+else:
+    db = client.raspgen_test
 
 
 def set_initial_db_state():
