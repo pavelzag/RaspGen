@@ -17,3 +17,7 @@ def get_white_list():
 
 def get_pin():
     return cfg['pin']
+
+
+def get_db_creds(parameter_name):
+    return cfg['mongodb'][parameter_name]
