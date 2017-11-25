@@ -143,9 +143,9 @@ if __name__ == '__main__':
                         send_mail(send_to=from_address, subject='Debug Message', text=debug_message)
                     elif 'off' in key_command:
                         if current_state is not 'down':
-                        # if uname()[1] == 'DietPi':
-                            if uname_debug == 'DietPi':
-                                # generator_cmd(cmd='off')
+                            if uname()[1] == 'DietPi':
+                            # if uname_debug == 'DietPi':
+                                generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
                                 logging_handler('{} {}'. format(get_current_time(), down_msg))
                                 end_time = datetime.datetime.now()
@@ -163,9 +163,9 @@ if __name__ == '__main__':
                             logging_handler(already_down_msg)
                     elif 'on' in key_command:
                         if current_state is not 'up':
-                        # if uname()[1] == 'DietPi':
-                            if uname_debug == 'DietPi':
-                                # generator_cmd(cmd='on')
+                            if uname()[1] == 'DietPi':
+                            # if uname_debug == 'DietPi':
+                                generator_cmd(cmd='on')
                                 set_gen_state(True, time_stamp=get_current_time())
                                 msg = '{} {}'. format(get_current_time(), up_msg)
                                 logging_handler(msg)
