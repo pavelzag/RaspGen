@@ -181,9 +181,12 @@ if __name__ == '__main__':
                         send_mail(send_to=from_address, subject='Log Message',
                                   text='Logs attached', file=file_logging_path)
                     elif 'status' in key_command:
-                        time_span = (datetime.datetime.now() - start_time).total_seconds()
-                        how_long, units = calculate_time_span(time_span)
-                        msg = '{} {} {} {} {}'.format('Generator is', current_state, 'for', how_long, units)
+                        if start_time:
+                            time_span = (datetime.datetime.now() - start_time).total_seconds()
+                            how_long, units = calculate_time_span(time_span)
+                            msg = '{} {} {} {} {}'.format('Generator is', current_state, 'for', how_long, units)
+                        else:
+                            msg = '{} {}'.format('Generator is', current_state)
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Status Message', text=msg)
                     else:
