@@ -32,10 +32,6 @@ def set_gen_state(state, time_stamp):
     logging.info('{} {}'.format('Setting state to:', state_print))
     db.generator_state.update_one({'_id':'gen_state'}, {"$set": {"state": state}}, upsert=True)
     db.generator_log.insert_one({"state": state_print, "time_stamp": time_stamp})
-    # cursor = db.generator_state.find({'state': state})
-    # for document in cursor:
-    #     print(document)
-            # return bool(document['state'])
 
 
 def set_time_spent(time_spent):

@@ -109,6 +109,14 @@ def is_in_white_list(mail_sender):
         return False
 
 
+def has_numbers(string):
+    return any(char.isdigit() for char in string)
+
+
+def extract_timeout_frame(command):
+    return int(command.split("on",1)[1])
+
+
 def logging_handler(msg):
     print(msg)
     logging.info(msg)
@@ -132,7 +140,7 @@ if __name__ == '__main__':
             if login_stat == 'OK':
                 # logging.info(login_message)
                 stat, cnt = msrvr.select('Inbox')
-                key_command = get_key_command(cnt)
+                key_command = ''.join(get_key_command(cnt))
                 from_address = get_sender()
                 if is_in_white_list(from_address):
                     current_state = str(get_gen_state())
@@ -143,9 +151,9 @@ if __name__ == '__main__':
                         send_mail(send_to=from_address, subject='Debug Message', text=debug_message)
                     elif 'off' in key_command:
                         if current_state is not 'down':
-                            if uname()[1] == 'DietPi':
-                            # if uname_debug == 'DietPi':
-                                generator_cmd(cmd='off')
+                            # if uname()[1] == 'DietPi':
+                            if uname_debug == 'DietPi':
+                                # generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
                                 logging_handler('{} {}'. format(get_current_time(), down_msg))
                                 end_time = datetime.datetime.now()
@@ -163,14 +171,43 @@ if __name__ == '__main__':
                             logging_handler(already_down_msg)
                     elif 'on' in key_command:
                         if current_state is not 'up':
-                            if uname()[1] == 'DietPi':
-                            # if uname_debug == 'DietPi':
-                                generator_cmd(cmd='on')
-                                set_gen_state(True, time_stamp=get_current_time())
-                                msg = '{} {}'. format(get_current_time(), up_msg)
-                                logging_handler(msg)
-                                send_mail(send_to=from_address, subject='Generator Control Message', text=up_msg)
-                                start_time = datetime.datetime.now()
+                            # if uname()[1] == 'DietPi':
+                            if uname_debug == 'DietPi':
+                                current_time_stamp = get_current_time()
+                                if has_numbers(key_command):
+                                    start_time = datetime.datetime.now()
+                                    timeout_frame = extract_timeout_frame(key_command)
+                                    timeout_stamp = datetime.datetime.now() + datetime.timedelta(0, 0, 0, 0, timeout_frame)
+                                    # generator_cmd(cmd='on')
+                                    mail_msg = '{} {} {} {}'.format(up_msg, 'for ',
+                                                                  timeout_frame, 'minutes')
+                                    logger_msg = '{} {} {} {} {}'.format(get_current_time(), up_msg, 'for ',
+                                                                  timeout_frame, 'minutes')
+                                    logging_handler(logger_msg)
+                                    set_gen_state(True, time_stamp=current_time_stamp)
+                                    send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+                                    delete_messages()
+                                    while timeout_stamp > datetime.datetime.now():
+                                        time_left = timeout_stamp - datetime.datetime.now()
+                                        time.sleep(sleep_time)
+                                        print('{} {} {}'.format('Generator is on for the next', time_left, 'minutes'))
+                                        try:
+                                            stat, cnt = msrvr.select('Inbox')
+                                            key_command = ''.join(get_key_command(cnt))
+                                            if 'off' in key_command:
+                                                msg = '{} {}'.format(get_current_time(), down_msg)
+                                                logging_handler(msg)
+                                                # generator_cmd(cmd='off')
+                                                set_gen_state(False, time_stamp=current_time_stamp)
+                                                break
+                                        except:
+                                            pass
+                                    # generator_cmd(cmd='off')
+                                    msg = '{} {}'.format(get_current_time(), down_msg)
+                                    mail_msg = '{} {} {}'.format('Generator is going down after', timeout_frame, 'minutes')
+                                    logging_handler(msg)
+                                    send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+                                    set_gen_state(False, time_stamp=current_time_stamp)
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
