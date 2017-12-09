@@ -1,15 +1,14 @@
 creds:
     email: me@gmail.com
-    user: me
+    user: generator
     password: password
     sleep_time: 5
-    owner: owner@gmail.com
+    owner: me@gmail.com
 white_list:
     bro@gmail.com, sis@gmail.com
 pin:
-    2
+    3
 mongodb:
-    url: ''
-    user: user
-    password: password
-    db_name: generator
+    test_uri: 'mongodb://root:pass@ds123456.mlab.com:23456/test'
+    prod_uri: 'mongodb://root:pass@ds223456.mlab.com:23456/raspgen'
+    env: 'prod'

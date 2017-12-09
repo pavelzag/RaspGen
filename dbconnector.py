@@ -2,15 +2,18 @@ import logging
 from pymongo import MongoClient
 from configuration import get_db_creds
 
-url = get_db_creds('url')
-db_user = get_db_creds('user')
-db_password = get_db_creds('password')
-db_name = get_db_creds('db_name')
+env = get_db_creds('env')
+test_uri = get_db_creds('test_uri')
+prod_uri = get_db_creds('prod_uri')
 
-uri = 'mongodb://' + db_user + ':' + db_password + '@' + url + '/' + db_name
+if env == 'test':
+    client = MongoClient(test_uri)
+    db = client.raspgen_test
+else:
+    client = MongoClient(prod_uri)
+    db = client.raspgen
 
-client = MongoClient(uri)
-db = client.raspgen_test
+print(db)
 
 
 def set_initial_db_state():
