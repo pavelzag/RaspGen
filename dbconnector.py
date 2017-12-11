@@ -16,7 +16,7 @@ else:
     db = client.raspgen
 
 if uname()[1] == 'DietPi':
-    db = client.raspgen_prod
+    db = client.raspgen
 else:
     db = client.raspgen_test
 print(db)
