@@ -211,6 +211,24 @@ if __name__ == '__main__':
                                                           text=mail_msg)
                                                 set_gen_state(False, time_stamp=current_time_stamp)
                                                 break
+                                            elif 'status' in key_command:
+                                                if start_time:
+                                                    time_span = (datetime.datetime.now() - start_time).total_seconds()
+                                                    how_long, units = calculate_time_span(time_span)
+                                                    msg = '{} {} {} {} {}'.format('Generator is', get_gen_state(),
+                                                                                  'for', how_long, units)
+                                                else:
+                                                    msg = '{} {}'.format('Generator is', get_gen_state())
+                                                logging_handler(msg)
+                                                send_mail(send_to=from_address, subject='Status Message', text=msg)
+                                                delete_messages()
+                                            elif 'log' in key_command:
+                                                msg = '{} {} {}'.format(get_current_time(), 'sending logs to',
+                                                                        from_address)
+                                                logging_handler(msg)
+                                                send_mail(send_to=from_address, subject='Log Message',
+                                                          text='Logs attached', file=file_logging_path)
+                                                delete_messages()
                                         except:
                                             pass
                                     if get_gen_state() == 'up':

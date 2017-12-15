@@ -57,3 +57,13 @@ def get_gen_state():
         msg = '{} {}'.format('Generator status is:', gen_state)
         logging_handler(msg)
         return str(gen_state)
+
+
+def set_keep_alive(time_stamp):
+    db.generator_keep_alive.update_one({'_id':'keep_alive'}, {"$set": {"time_stamp": time_stamp}}, upsert=True)
+
+
+def get_keep_alive():
+    cursor = db.generator_keep_alive.find({})
+    for document in cursor:
+        return document
