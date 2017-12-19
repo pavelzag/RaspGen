@@ -209,6 +209,7 @@ if __name__ == '__main__':
                                                 logging_handler(down_msg)
                                                 send_mail(send_to=from_address, subject='Generator Control Message',
                                                           text=mail_msg)
+                                                current_time_stamp = get_current_time()
                                                 set_gen_state(False, time_stamp=current_time_stamp)
                                                 break
                                             elif 'status' in key_command:
@@ -236,6 +237,7 @@ if __name__ == '__main__':
                                         mail_msg = '{} {} {}'.format('Generator is going down after', timeout_frame, 'minutes')
                                         logging_handler(down_msg)
                                         send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+                                        current_time_stamp = get_current_time()
                                         set_gen_state(False, time_stamp=current_time_stamp)
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
