@@ -92,12 +92,18 @@ def get_body_word(body):
     return cut_word
 
 
-def get_current_time(date=False):
+def get_current_time(date=False, datetime_format=False):
     ts = time.time()
     if not date:
-        time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        if datetime_format:
+            time_stamp = datetime.datetime.fromtimestamp(ts)
+        else:
+            time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
     else:
-        time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
+        if datetime_format:
+            time_stamp = datetime.datetime.fromtimestamp(ts)
+        else:
+            time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
     return time_stamp
 
 
@@ -157,8 +163,8 @@ if __name__ == '__main__':
                         send_mail(send_to=from_address, subject='Debug Message', text=debug_message)
                     elif 'off' in key_command:
                         if get_gen_state() is not 'down':
-                            if uname()[1] == 'DietPi':
-                            # if uname_debug == 'DietPi':
+                            # if uname()[1] == 'DietPi':
+                            if uname_debug == 'DietPi':
                                 generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
                                 logging_handler(down_msg)
@@ -170,15 +176,16 @@ if __name__ == '__main__':
                                 logging_handler(msg_to_log)
                                 mail_msg = '{} {}'.format(down_msg, msg_to_log)
                                 send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
-                                set_time_spent(time_stamp=get_current_time(date=True), time_span=time_span)
+                                set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
+                                               time_span=time_span)
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
                             logging_handler(already_down_msg)
                     elif 'on' in key_command:
                         if get_gen_state() is not 'up':
-                            if uname()[1] == 'DietPi':
-                            # if uname_debug == 'DietPi':
+                            # if uname()[1] == 'DietPi':
+                            if uname_debug == 'DietPi':
                                 current_time_stamp = get_current_time()
                                 start_time = datetime.datetime.now()
                                 if not has_numbers(key_command):
@@ -217,7 +224,8 @@ if __name__ == '__main__':
                                                 send_mail(send_to=from_address, subject='Generator Control Message',
                                                           text=mail_msg)
                                                 set_gen_state(False, time_stamp=get_current_time())
-                                                set_time_spent(time_stamp=get_current_time(date=True), time_span=on_time)
+                                                set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
+                                                               time_span=on_time)
                                                 break
                                             elif 'status' in key_command:
                                                 if start_time:
@@ -246,7 +254,8 @@ if __name__ == '__main__':
                                         send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
                                         set_gen_state(False, time_stamp=get_current_time())
                                         on_time = chop_microseconds(timeout_stamp - start_time).seconds
-                                        set_time_spent(time_stamp=get_current_time(date=True), time_span=on_time)
+                                        set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
+                                                       time_span=on_time)
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
