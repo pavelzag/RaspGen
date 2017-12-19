@@ -31,15 +31,18 @@ pin = int(get_pin())
 
 
 def generator_cmd(cmd):
-    import RPi.GPIO as GPIO
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, GPIO.HIGH)
-    if cmd == 'on':
-        GPIO.output(pin, False)
-    elif cmd == 'off':
-        GPIO.output(pin, True)
+    if uname()[1] == 'DietPi':
+        import RPi.GPIO as GPIO
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(pin, GPIO.OUT)
+        GPIO.output(pin, GPIO.HIGH)
+        if cmd == 'on':
+            GPIO.output(pin, False)
+        elif cmd == 'off':
+            GPIO.output(pin, True)
+    else:
+        logging_handler('test mode. generator is not going up')
 
 
 def delete_messages():
@@ -177,7 +180,7 @@ if __name__ == '__main__':
                                 if not has_numbers(key_command):
                                     generator_cmd(cmd='on')
                                     logging_handler(up_msg)
-                                    set_gen_state(True, time_stamp=current_time_stamp)
+                                    set_gen_state(True, time_stamp=get_current_time())
                                     send_mail(send_to=from_address, subject='Generator Control Message', text=up_msg)
                                 else:
                                     timeout_frame = extract_timeout_frame(key_command)
@@ -188,7 +191,7 @@ if __name__ == '__main__':
                                     logger_msg = '{} {} {} {}'.format(up_msg, 'for ',
                                                                   timeout_frame, 'minutes')
                                     logging_handler(logger_msg)
-                                    set_gen_state(True, time_stamp=current_time_stamp)
+                                    set_gen_state(True, time_stamp=get_current_time())
                                     send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
                                     delete_messages()
                                     while timeout_stamp > datetime.datetime.now():
@@ -209,8 +212,7 @@ if __name__ == '__main__':
                                                 logging_handler(down_msg)
                                                 send_mail(send_to=from_address, subject='Generator Control Message',
                                                           text=mail_msg)
-                                                current_time_stamp = get_current_time()
-                                                set_gen_state(False, time_stamp=current_time_stamp)
+                                                set_gen_state(False, time_stamp=get_current_time())
                                                 break
                                             elif 'status' in key_command:
                                                 if start_time:
@@ -237,8 +239,7 @@ if __name__ == '__main__':
                                         mail_msg = '{} {} {}'.format('Generator is going down after', timeout_frame, 'minutes')
                                         logging_handler(down_msg)
                                         send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
-                                        current_time_stamp = get_current_time()
-                                        set_gen_state(False, time_stamp=current_time_stamp)
+                                        set_gen_state(False, time_stamp=get_current_time())
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
