@@ -47,8 +47,8 @@ def set_gen_state(state, time_stamp):
         logging_handler(error_msg)
 
 
-def set_time_spent(time_spent):
-    db.time_spent.insert_one({"time_span": time_spent})
+def set_time_spent(time_stamp, time_span):
+    db.time_spent.insert_one({"time_stamp": time_stamp,"time_span": time_span})
 
 
 def get_gen_state():

@@ -92,10 +92,14 @@ def get_body_word(body):
     return cut_word
 
 
-def get_current_time():
+def get_current_time(date=False):
     ts = time.time()
-    time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    if not date:
+        time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        time_stamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
     return time_stamp
+
 
 
 def calculate_time_span(time_span):
@@ -166,7 +170,7 @@ if __name__ == '__main__':
                                 logging_handler(msg_to_log)
                                 mail_msg = '{} {}'.format(down_msg, msg_to_log)
                                 send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
-                                set_time_spent(time_span)
+                                set_time_spent(time_stamp=get_current_time(date=True), time_span=time_span)
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
@@ -213,6 +217,7 @@ if __name__ == '__main__':
                                                 send_mail(send_to=from_address, subject='Generator Control Message',
                                                           text=mail_msg)
                                                 set_gen_state(False, time_stamp=get_current_time())
+                                                set_time_spent(time_stamp=get_current_time(date=True), time_span=on_time)
                                                 break
                                             elif 'status' in key_command:
                                                 if start_time:
@@ -240,6 +245,8 @@ if __name__ == '__main__':
                                         logging_handler(down_msg)
                                         send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
                                         set_gen_state(False, time_stamp=get_current_time())
+                                        on_time = chop_microseconds(timeout_stamp - start_time).seconds
+                                        set_time_spent(time_stamp=get_current_time(date=True), time_span=on_time)
                             else:
                                 logging_handler('{} {}'.format('This is not a Raspi, this is', uname()[1]))
                         else:
