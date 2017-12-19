@@ -8,15 +8,9 @@ env = get_db_creds('env')
 test_uri = get_db_creds('test_uri')
 prod_uri = get_db_creds('prod_uri')
 
-# if env == 'test':
-#     client = MongoClient(test_uri)
-#     db = client.raspgen_test
-# else:
-#     client = MongoClient(prod_uri)
-#     db = client.raspgen
 
 if uname()[1] == 'DietPi':
-    client = MongoClient(test_uri1)
+    client = MongoClient(test_uri)
     db = client.raspgen
 else:
     client = MongoClient(prod_uri)
