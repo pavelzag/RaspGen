@@ -26,7 +26,7 @@ def set_initial_db_state():
         success_msg = 'status set successfully'
         logging.info(success_msg)
     except (AttributeError, errors.OperationFailure):
-        error_msg = '{} {}'.format('There was a problem setting up db initial status')
+        error_msg = 'There was a problem setting up db initial status'
         logging_handler(error_msg)
 
 
