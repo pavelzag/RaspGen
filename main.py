@@ -107,7 +107,6 @@ def get_current_time(date=False, datetime_format=False):
     return time_stamp
 
 
-
 def calculate_time_span(time_span):
     #TODO Add Hours
     if time_span > 60:
@@ -135,8 +134,8 @@ def chop_microseconds(timeframe):
     return timeframe - datetime.timedelta(microseconds=timeframe.microseconds)
 
 
-def calculate_daily_usage(month):
-    time_spent = get_time_spent(12)
+def calculate_monthly_usage(month):
+    time_spent = get_time_spent(month)
     return time_spent
 
 
@@ -168,8 +167,8 @@ if __name__ == '__main__':
                         send_mail(send_to=from_address, subject='Debug Message', text=debug_message)
                     elif 'off' in key_command:
                         if get_gen_state() is not 'down':
-                            # if uname()[1] == 'DietPi':
-                            if uname_debug == 'DietPi':
+                            if uname()[1] == 'DietPi':
+                            # if uname_debug == 'DietPi':
                                 generator_cmd(cmd='off')
                                 set_gen_state(state=False, time_stamp=get_current_time())
                                 logging_handler(down_msg)
@@ -189,8 +188,8 @@ if __name__ == '__main__':
                             logging_handler(already_down_msg)
                     elif 'on' in key_command:
                         if get_gen_state() is not 'up':
-                            # if uname()[1] == 'DietPi':
-                            if uname_debug == 'DietPi':
+                            if uname()[1] == 'DietPi':
+                            # if uname_debug == 'DietPi':
                                 current_time_stamp = get_current_time()
                                 start_time = datetime.datetime.now()
                                 if not has_numbers(key_command):
@@ -202,13 +201,11 @@ if __name__ == '__main__':
                                     timeout_frame = extract_timeout_frame(key_command)
                                     timeout_stamp = datetime.datetime.now() + datetime.timedelta(0, 0, 0, 0, timeout_frame)
                                     generator_cmd(cmd='on')
-                                    mail_msg = '{} {} {} {}'.format(up_msg, 'for ',
-                                                                  timeout_frame, 'minutes')
                                     logger_msg = '{} {} {} {}'.format(up_msg, 'for ',
                                                                   timeout_frame, 'minutes')
                                     logging_handler(logger_msg)
                                     set_gen_state(True, time_stamp=get_current_time())
-                                    send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+                                    send_mail(send_to=from_address, subject='Generator Control Message', text=logger_msg)
                                     delete_messages()
                                     while timeout_stamp > datetime.datetime.now():
                                         time_left = timeout_stamp - datetime.datetime.now()
@@ -217,20 +214,24 @@ if __name__ == '__main__':
                                                                     chop_microseconds(time_left), 'minutes'))
                                         logging_handler(msg)
                                         try:
+                                            msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
+                                            msrvr.login(receiver_email, receiver_password)
                                             stat, cnt = msrvr.select('Inbox')
                                             key_command = ''.join(get_key_command(cnt))
                                             if 'off' in key_command:
                                                 generator_cmd(cmd='off')
-                                                on_time = chop_microseconds(datetime.timedelta(0, 0, 0, 0, timeout_frame) - time_left).seconds
-                                                mail_msg = '{} {} {}'.format('Generator is going down after',
-                                                                             on_time, 'minutes')
+                                                on_time = chop_microseconds(datetime.timedelta
+                                                                            (0, 0, 0, 0, timeout_frame) - time_left).seconds
+                                                usage_time = str(datetime.timedelta(seconds=on_time))
 
+                                                mail_msg = '{} {} {}'.format('Generator is going down after',
+                                                                             usage_time, 'minutes')
                                                 logging_handler(down_msg)
                                                 send_mail(send_to=from_address, subject='Generator Control Message',
                                                           text=mail_msg)
                                                 set_gen_state(False, time_stamp=get_current_time())
-                                                set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
-                                                               time_span=on_time)
+                                                set_time_spent(time_stamp=get_current_time
+                                                (date=True, datetime_format=True), time_span=on_time)
                                                 break
                                             elif 'status' in key_command:
                                                 if start_time:
@@ -254,9 +255,11 @@ if __name__ == '__main__':
                                             pass
                                     if get_gen_state() == 'up':
                                         generator_cmd(cmd='off')
-                                        mail_msg = '{} {} {}'.format('Generator is going down after', timeout_frame, 'minutes')
+                                        mail_msg = '{} {} {}'.format('Generator is going down after',
+                                                                     timeout_frame, 'minutes')
                                         logging_handler(down_msg)
-                                        send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+                                        send_mail(send_to=from_address, subject='Generator Control Message',
+                                                  text=mail_msg)
                                         set_gen_state(False, time_stamp=get_current_time())
                                         on_time = chop_microseconds(timeout_stamp - start_time).seconds
                                         set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
@@ -280,7 +283,7 @@ if __name__ == '__main__':
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Status Message', text=msg)
                     elif 'usage':
-                        daily_usage = calculate_daily_usage(12)
+                        daily_usage = calculate_monthly_usage(datetime.datetime.now().month)
                         usage_time = str(datetime.timedelta(seconds=daily_usage))
                         msg = '{} {} {}'.format\
                             ('Generator has been working for', usage_time, 'this month')
