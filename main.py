@@ -1,4 +1,4 @@
-from dbconnector import set_gen_state, get_gen_state, set_initial_db_state, set_time_spent
+from dbconnector import set_gen_state, get_gen_state, get_time_spent, set_initial_db_state, set_time_spent
 from configuration import get_config, get_white_list, get_pin
 from logger import logging_handler
 from send_mail import send_mail
@@ -135,6 +135,11 @@ def chop_microseconds(timeframe):
     return timeframe - datetime.timedelta(microseconds=timeframe.microseconds)
 
 
+def calculate_daily_usage(month):
+    time_spent = get_time_spent(12)
+    return time_spent
+
+
 if __name__ == '__main__':
     ip_address = get_machine_ip()
     startup_msg = '{} {}'.format('Machine runs on', ip_address)
@@ -216,7 +221,7 @@ if __name__ == '__main__':
                                             key_command = ''.join(get_key_command(cnt))
                                             if 'off' in key_command:
                                                 generator_cmd(cmd='off')
-                                                on_time = chop_microseconds(datetime.timedelta(0, 0, 0, 0, timeout_frame) - time_left)
+                                                on_time = chop_microseconds(datetime.timedelta(0, 0, 0, 0, timeout_frame) - time_left).seconds
                                                 mail_msg = '{} {} {}'.format('Generator is going down after',
                                                                              on_time, 'minutes')
 
@@ -274,6 +279,12 @@ if __name__ == '__main__':
                             msg = '{} {}'.format('Generator is', get_gen_state())
                         logging_handler(msg)
                         send_mail(send_to=from_address, subject='Status Message', text=msg)
+                    elif 'usage':
+                        daily_usage = calculate_daily_usage(12)
+                        usage_time = str(datetime.timedelta(seconds=daily_usage))
+                        msg = '{} {} {}'.format\
+                            ('Generator has been working for', usage_time, 'this month')
+                        send_mail(send_to=from_address, subject='Generator Usage Message', text=msg)
                     else:
                         msg = '{} {}'.format(''.join(key_command), 'is an unknown command')
                         logging_handler(msg)

@@ -48,7 +48,7 @@ def set_gen_state(state, time_stamp):
 
 
 def set_time_spent(time_stamp, time_span):
-    db.time_spent.insert_one({"time_stamp": time_stamp,"time_span": time_span})
+    db.time_spent.insert_one({"time_stamp": time_stamp, "time_span": time_span})
 
 
 def get_gen_state():
@@ -73,3 +73,12 @@ def get_keep_alive():
     cursor = db.generator_keep_alive.find({})
     for document in cursor:
         return document
+
+
+def get_time_spent(month):
+    time_sum_minutes =[]
+    cursor = db.time_spent.find({})
+    for document in cursor:
+        if month == document['time_stamp'].month:
+            time_sum_minutes.append(document['time_span'])
+    return sum(time_sum_minutes)
