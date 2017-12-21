@@ -209,6 +209,7 @@ if __name__ == '__main__':
             if login_stat == 'OK':
                 stat, cnt = msrvr.select('Inbox')
                 key_command = ''.join(get_key_command(cnt))
+                logging_handler('{} {}'.format('The key command is', key_command))
                 from_address = get_sender()
                 if is_in_white_list(from_address):
                     current_state = get_gen_state()
