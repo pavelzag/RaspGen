@@ -168,7 +168,9 @@ def log_command():
 
 def usage_command():
     daily_usage = calculate_monthly_usage(datetime.datetime.now().month)
+    logging_handler('{} {}'.format('The daily usage is:', daily_usage))
     usage_time = str(datetime.timedelta(seconds=daily_usage))
+    logging_handler('{} {}'.format('The usage time is:', usage_time))
     msg = '{} {} {}'.format('Generator has been working for', usage_time, 'this month')
     logging_handler(msg)
     send_mail(send_to=from_address, subject='Generator Usage Message', text=msg)
