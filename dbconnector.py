@@ -77,7 +77,6 @@ def get_keep_alive():
 
 def get_time_spent(month):
     time_sum_minutes =[]
-    logging_handler('entering get_time_spent')
     cursor = db.time_spent.find({})
     for document in cursor:
         if month == document['time_stamp'].month:
