@@ -73,14 +73,14 @@ def get_key_command(cnt):
             if isinstance(response_part, tuple):
                 msg = email.message_from_string(response_part[1])
     try:
-        body = get_body_word(data[0][1])
-        logging_handler('{} {}'.format('The request body is:', body))
+        # body = get_body_word(data[0][1])
+        # logging_handler('{} {}'.format('The request body is:', body))
         subject = msg['subject'].lower()
         logging_handler('{} {}'.format('The request subject is:', subject))
     except:
         msg = '{} {}'.format('There\'s a problem with the', key_command)
         logging_handler(msg)
-    return subject, body
+    return subject
 
 
 def get_if_same_status():
