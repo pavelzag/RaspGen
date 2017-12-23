@@ -32,6 +32,7 @@ def send_mail(send_from = 'zagalsky@gmail.com', send_to='', subject='hi', text='
     smtp.starttls()
     sender_email = get_config('email')
     sender_password = get_config('password')
-    smtp.login(sender_email, sender_password)
+    result = smtp.login(sender_email, sender_password)[1]
+    logging_handler('{} {}'.format('Connection to SMTP result:', result))
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.close()
