@@ -72,8 +72,14 @@ def get_key_command(cnt):
         for response_part in msg_data:
             if isinstance(response_part, tuple):
                 msg = email.message_from_string(response_part[1])
-    body = get_body_word(data[0][1])
-    subject = msg['subject'].lower()
+    try:
+        body = get_body_word(data[0][1])
+        logging_handler('{} {}'.format('The request body is:', body))
+        subject = msg['subject'].lower()
+        logging_handler('{} {}'.format('The request subject is:', subject))
+    except:
+        msg = '{} {}'.format('There\'s a problem with the', key_command)
+        logging_handler(msg)
     return subject, body
 
 
