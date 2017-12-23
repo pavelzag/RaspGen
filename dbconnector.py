@@ -1,6 +1,6 @@
 import logging
 from logger import logging_handler
-from os import path, uname
+from os import uname
 from pymongo import MongoClient, errors
 from configuration import get_db_creds
 

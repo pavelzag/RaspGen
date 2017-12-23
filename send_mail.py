@@ -5,10 +5,12 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
+from logger import logging_handler
 
 
 def send_mail(send_from = 'zagalsky@gmail.com', send_to='', subject='hi', text='text', file=None,
               server="smtp.gmail.com"):
+    logging_handler('{} {} {} {}'.format('Sending', text, 'mail to:',send_to))
     msg = MIMEMultipart()
     msg['From'] = send_from
     msg['To'] = send_to
