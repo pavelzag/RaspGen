@@ -45,6 +45,27 @@ def generator_cmd(cmd):
         logging_handler('test mode. generator is not going up')
 
 
+def poll_mail():
+    msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
+    msrvr.login(receiver_email, receiver_password)
+    stat, cnt = msrvr.select('Inbox')
+    for i in cnt:
+        typ, msg_data = msrvr.fetch(str(i), '(RFC822)')
+        for response_part in msg_data:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_string(response_part[1])
+    if msg:
+        from_message = msg['From']
+        sender = re.findall(r'<(.*?)>', from_message)[0]
+        try:
+            key_command = msg['subject'].lower()
+            logging_handler('{} {}'.format('The request subject is:', key_command))
+        except:
+            msg = '{} {}'.format('There\'s a problem with the', key_command)
+            logging_handler(msg)
+    return key_command, sender
+
+
 def delete_messages():
     msrvr.select('Inbox')
     typ, data = msrvr.search(None, 'ALL')
@@ -65,37 +86,8 @@ def get_machine_ip():
     return IP
 
 
-def get_key_command(cnt):
-    count, data = msrvr.fetch(cnt[0], '(UID BODY[TEXT])')
-    for i in cnt:
-        typ, msg_data = msrvr.fetch(str(i), '(RFC822)')
-        for response_part in msg_data:
-            if isinstance(response_part, tuple):
-                msg = email.message_from_string(response_part[1])
-    try:
-        # body = get_body_word(data[0][1])
-        # logging_handler('{} {}'.format('The request body is:', body))
-        subject = msg['subject'].lower()
-        logging_handler('{} {}'.format('The request subject is:', subject))
-    except:
-        msg = '{} {}'.format('There\'s a problem with the', key_command)
-        logging_handler(msg)
-    return subject
-
-
 def get_if_same_status():
     pass
-
-
-def get_sender():
-    from_data = msrvr.fetch(cnt[0], '(BODY[HEADER.FIELDS (SUBJECT FROM)])')
-    header_data = from_data[1][0][1]
-    return ''.join(re.findall(r'<(.+?)>', header_data))
-
-
-def get_body_word(body):
-    cut_word = re.findall(r'^.*$', body, re.MULTILINE)[3][:-1].lower()
-    return cut_word
 
 
 def get_current_time(date=False, datetime_format=False):
@@ -213,10 +205,8 @@ if __name__ == '__main__':
             msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
             login_stat, login_message = msrvr.login(receiver_email, receiver_password)
             if login_stat == 'OK':
-                stat, cnt = msrvr.select('Inbox')
-                key_command = ''.join(get_key_command(cnt))
+                key_command, from_address = poll_mail()
                 logging_handler('{} {}'.format('The key command is', key_command))
-                from_address = get_sender()
                 if is_in_white_list(from_address):
                     current_state = get_gen_state()
                     logging_handler('{} {}'.format(from_address, white_list))
@@ -242,7 +232,6 @@ if __name__ == '__main__':
                                                               timeout_frame, 'minutes')
                                 logging_handler(logger_msg)
                                 set_gen_state(True, time_stamp=get_current_time())
-                                mail_cnt = 0
                                 send_mail(send_to=from_address, subject='Generator Control Message', text=logger_msg)
                                 delete_messages()
                                 while timeout_stamp > datetime.datetime.now():
@@ -252,10 +241,7 @@ if __name__ == '__main__':
                                                                 chop_microseconds(time_left), 'minutes'))
                                     logging_handler(msg)
                                     try:
-                                        msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
-                                        msrvr.login(receiver_email, receiver_password)
-                                        stat, cnt = msrvr.select('Inbox')
-                                        key_command = ''.join(get_key_command(cnt))
+                                        key_command = poll_mail()
                                         if 'off' in key_command:
                                             time_args = timeout_frame, time_left
                                             off_command(time_args)
