@@ -19,6 +19,7 @@ print(db)
 
 
 def set_initial_db_state():
+    """"Sets the state entry in DB to off on boot"""
     msg = 'Setting db state on boot on off'
     logging_handler(msg)
     try:
@@ -30,7 +31,23 @@ def set_initial_db_state():
         logging_handler(error_msg)
 
 
+def get_gen_state():
+    """"Gets generator's status"""
+    msg = 'Getting generator status'
+    logging_handler(msg)
+    cursor = db.generator_state.find({})
+    for document in cursor:
+        if document['state'] is False:
+            gen_state = 'down'
+        else:
+            gen_state = 'up'
+        msg = '{} {}'.format('Generator status is:', gen_state)
+        logging_handler(msg)
+        return str(gen_state)
+
+
 def set_gen_state(state, time_stamp):
+    """"Sets generator state with a timestamp and adds an entry to the log"""
     if state:
         state_print = "up"
     else:
@@ -47,38 +64,16 @@ def set_gen_state(state, time_stamp):
         logging_handler(error_msg)
 
 
-def set_time_spent(time_stamp, time_span):
-    db.time_spent.insert_one({"time_stamp": time_stamp, "time_span": time_span})
-
-
-def get_gen_state():
-    msg = 'Getting generator status'
-    logging_handler(msg)
-    cursor = db.generator_state.find({})
-    for document in cursor:
-        if document['state'] is False:
-            gen_state = 'down'
-        else:
-            gen_state = 'up'
-        msg = '{} {}'.format('Generator status is:', gen_state)
-        logging_handler(msg)
-        return str(gen_state)
-
-
-def set_keep_alive(time_stamp):
-    db.generator_keep_alive.update_one({'_id':'keep_alive'}, {"$set": {"time_stamp": time_stamp}}, upsert=True)
-
-
-def get_keep_alive():
-    cursor = db.generator_keep_alive.find({})
-    for document in cursor:
-        return document
-
-
 def get_time_spent(month):
-    time_sum_minutes =[]
+    """"Gets generator's time spent on in seconds"""
+    time_sum_seconds =[]
     cursor = db.time_spent.find({})
     for document in cursor:
         if month == document['time_stamp'].month:
-            time_sum_minutes.append(document['time_span'])
-    return sum(time_sum_minutes)
+            time_sum_seconds.append(document['time_span'])
+    return sum(time_sum_seconds)
+
+
+def set_time_spent(time_stamp, time_span):
+    """"Sets generator's time spent on"""
+    db.time_spent.insert_one({"time_stamp": time_stamp, "time_span": time_span})

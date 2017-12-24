@@ -31,6 +31,7 @@ pin = int(get_pin())
 
 
 def generator_cmd(cmd):
+    """"Sending the generator command"""
     if uname()[1] == 'DietPi':
         import RPi.GPIO as GPIO
         GPIO.setmode(GPIO.BCM)
@@ -46,6 +47,7 @@ def generator_cmd(cmd):
 
 
 def poll_mail():
+    """Returns a key command that is being received from the mail and the sender"""
     msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
     msrvr.login(receiver_email, receiver_password)
     stat, cnt = msrvr.select('Inbox')
@@ -67,6 +69,7 @@ def poll_mail():
 
 
 def delete_messages():
+    """Deletes messages in Mail Inbox"""
     logging_handler('Deleting messages')
     msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
     msrvr.login(receiver_email, receiver_password)
@@ -79,6 +82,7 @@ def delete_messages():
 
 
 def get_machine_ip():
+    """Gets the running machine's IP address"""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('10.255.255.255', 1))
@@ -91,6 +95,8 @@ def get_machine_ip():
 
 
 def get_current_time(date=False, datetime_format=False):
+    """Gets the current time. In a string format by default
+    or in the datetime format if datetime_format is set to True"""
     ts = time.time()
     if not date:
         if datetime_format:
@@ -106,6 +112,7 @@ def get_current_time(date=False, datetime_format=False):
 
 
 def calculate_time_span(time_span):
+    """"Returns the time span in tuple format"""
     #TODO Add Hours
     if time_span > 60:
         return time.strftime("%M:%S", time.gmtime(time_span)), 'minutes'
@@ -114,30 +121,26 @@ def calculate_time_span(time_span):
 
 
 def is_in_white_list(mail_sender):
+    """"Checking if the sender is in the white list"""
     if mail_sender in get_white_list():
         return True
     else:
         return False
 
 
-def has_numbers(string):
-    return any(char.isdigit() for char in string)
-
-
-def extract_timeout_frame(command):
-    return int(command.split("on",1)[1])
-
-
 def chop_microseconds(timeframe):
+    """"Chops the microseconds off the timeframe"""
     return timeframe - datetime.timedelta(microseconds=timeframe.microseconds)
 
 
 def calculate_monthly_usage(month):
+    """"Calculates the monthly usage in seconds"""
     time_spent = get_time_spent(month)
     return time_spent
 
 
 def off_command(time_args=None):
+    """"Processes the Off Command"""
     generator_cmd(cmd='off')
     set_gen_state(state=False, time_stamp=get_current_time())
     if time_args:
@@ -157,7 +160,8 @@ def off_command(time_args=None):
 
 
 def log_command():
-    msg = '{} {} {}'.format(get_current_time(), 'sending logs to', from_address)
+    """"Processes the Log Command"""
+    msg = '{} {}'.format('Sending logs to', from_address)
     logging_handler(msg)
     send_mail(send_to=from_address, subject='Log Message',
               text='Logs attached', file=file_logging_path)
@@ -165,8 +169,9 @@ def log_command():
 
 
 def usage_command():
-    daily_usage = calculate_monthly_usage(datetime.datetime.now().month)
-    usage_time = str(datetime.timedelta(seconds=daily_usage))
+    """"Processes the Usage Command"""
+    usage_seconds = calculate_monthly_usage(datetime.datetime.now().month)
+    usage_time = str(datetime.timedelta(seconds=usage_seconds))
     msg = '{} {} {}'.format('Generator has been working for', usage_time, 'this month')
     logging_handler(msg)
     send_mail(send_to=from_address, subject='Generator Usage Message', text=msg)
@@ -174,6 +179,7 @@ def usage_command():
 
 
 def status_command():
+    """"Processes the Status Command"""
     if start_time:
         time_span = (datetime.datetime.now() - start_time).total_seconds()
         how_long, units = calculate_time_span(time_span)
@@ -186,6 +192,7 @@ def status_command():
 
 
 def unknown_command():
+    """"Processes the Unknown Command"""
     msg = '{} {}'.format(''.join(key_command), 'is an unknown command')
     logging_handler(msg)
     send_mail(send_to=from_address, text=msg)
@@ -216,13 +223,13 @@ if __name__ == '__main__':
                     if get_gen_state() is not 'up':
                         current_time_stamp = get_current_time()
                         start_time = datetime.datetime.now()
-                        if not has_numbers(key_command):
+                        if not any(char.isdigit() for char in key_command):
                             generator_cmd(cmd='on')
                             logging_handler(up_msg)
                             set_gen_state(True, time_stamp=get_current_time())
                             send_mail(send_to=from_address, subject='Generator Control Message', text=up_msg)
                         else:
-                            timeout_frame = extract_timeout_frame(key_command)
+                            timeout_frame = int(key_command.split("on", 1)[1])
                             timeout_stamp = datetime.datetime.now() + datetime.timedelta(0, 0, 0, 0, timeout_frame)
                             generator_cmd(cmd='on')
                             logger_msg = '{} {} {} {}'.format(up_msg, 'for ',
