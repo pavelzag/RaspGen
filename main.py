@@ -67,11 +67,15 @@ def poll_mail():
 
 
 def delete_messages():
+    logging_handler('Deleting messages')
+    msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
+    msrvr.login(receiver_email, receiver_password)
     msrvr.select('Inbox')
     typ, data = msrvr.search(None, 'ALL')
     for num in data[0].split():
        msrvr.store(num, '+FLAGS', '\\Deleted')
     msrvr.expunge()
+    logging_handler('Messages were deleted successfully')
 
 
 def get_machine_ip():
@@ -84,10 +88,6 @@ def get_machine_ip():
     finally:
         s.close()
     return IP
-
-
-def get_if_same_status():
-    pass
 
 
 def get_current_time(date=False, datetime_format=False):
@@ -146,7 +146,7 @@ def off_command(time_args=None):
         usage_time = str(datetime.timedelta(seconds=on_time))
         mail_msg = '{} {} {}'.format('Generator is going down after', usage_time, 'minutes')
     else:
-        # Add 2 minutes (???) compensation for going down
+        # Adding 2 minutes compensation for going down
         on_time = int((datetime.datetime.now() - start_time).total_seconds()) + 120
         how_long, units = calculate_time_span(on_time)
         msg_to_log = '{} {} {}'.format('The generator was up for:', how_long, units)
@@ -202,89 +202,83 @@ if __name__ == '__main__':
     i = 1
     while i == 1:
         try:
-            msrvr = imaplib.IMAP4_SSL(imap_addr, imap_port)
-            login_stat, login_message = msrvr.login(receiver_email, receiver_password)
-            if login_stat == 'OK':
-                key_command, from_address = poll_mail()
-                logging_handler('{} {}'.format('The key command is', key_command))
-                if is_in_white_list(from_address):
-                    current_state = get_gen_state()
-                    logging_handler('{} {}'.format(from_address, white_list))
-                    if 'off' in key_command:
-                        if get_gen_state() is not 'down':
-                            off_command()
-                        else:
-                            logging_handler(already_down_msg)
-                    elif 'on' in key_command:
-                        if get_gen_state() is not 'up':
-                            current_time_stamp = get_current_time()
-                            start_time = datetime.datetime.now()
-                            if not has_numbers(key_command):
-                                generator_cmd(cmd='on')
-                                logging_handler(up_msg)
-                                set_gen_state(True, time_stamp=get_current_time())
-                                send_mail(send_to=from_address, subject='Generator Control Message', text=up_msg)
-                            else:
-                                timeout_frame = extract_timeout_frame(key_command)
-                                timeout_stamp = datetime.datetime.now() + datetime.timedelta(0, 0, 0, 0, timeout_frame)
-                                generator_cmd(cmd='on')
-                                logger_msg = '{} {} {} {}'.format(up_msg, 'for ',
-                                                              timeout_frame, 'minutes')
-                                logging_handler(logger_msg)
-                                set_gen_state(True, time_stamp=get_current_time())
-                                send_mail(send_to=from_address, subject='Generator Control Message', text=logger_msg)
-                                delete_messages()
-                                while timeout_stamp > datetime.datetime.now():
-                                    time_left = timeout_stamp - datetime.datetime.now()
-                                    time.sleep(sleep_time)
-                                    msg = ('{} {} {}'.format('Generator is on for the next',
-                                                                chop_microseconds(time_left), 'minutes'))
-                                    logging_handler(msg)
-                                    try:
-                                        key_command = poll_mail()
-                                        if 'off' in key_command:
-                                            time_args = timeout_frame, time_left
-                                            off_command(time_args)
-                                            break
-                                        elif 'status' in key_command:
-                                            status_command()
-                                        elif 'log' in key_command:
-                                            log_command()
-                                        elif 'usage' in key_command:
-                                            usage_command()
-                                        else:
-                                            unknown_command()
-                                    except:
-                                        pass
-                                if get_gen_state() == 'up':
-                                    generator_cmd(cmd='off')
-                                    mail_msg = '{} {} {}'.format('Generator is going down after',
-                                                                 timeout_frame, 'minutes')
-                                    logging_handler(down_msg)
-                                    send_mail(send_to=from_address, subject='Generator Control Message',
-                                              text=mail_msg)
-                                    set_gen_state(False, time_stamp=get_current_time())
-                                    on_time = chop_microseconds(timeout_stamp - start_time).seconds
-                                    set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
-                                                   time_span=on_time)
-                        else:
-                            logging_handler(already_up_msg)
-                    elif 'log' in key_command:
-                        log_command()
-                    elif 'status' in key_command:
-                        status_command()
-                    elif 'usage':
-                        usage_command()
+            key_command, from_address = poll_mail()
+            logging_handler('{} {}'.format('The key command is', key_command))
+            if is_in_white_list(from_address):
+                current_state = get_gen_state()
+                logging_handler('{} {}'.format(from_address, white_list))
+                if 'off' in key_command:
+                    if get_gen_state() is not 'down':
+                        off_command()
                     else:
-                        unknown_command()
+                        logging_handler(already_down_msg)
+                elif 'on' in key_command:
+                    if get_gen_state() is not 'up':
+                        current_time_stamp = get_current_time()
+                        start_time = datetime.datetime.now()
+                        if not has_numbers(key_command):
+                            generator_cmd(cmd='on')
+                            logging_handler(up_msg)
+                            set_gen_state(True, time_stamp=get_current_time())
+                            send_mail(send_to=from_address, subject='Generator Control Message', text=up_msg)
+                        else:
+                            timeout_frame = extract_timeout_frame(key_command)
+                            timeout_stamp = datetime.datetime.now() + datetime.timedelta(0, 0, 0, 0, timeout_frame)
+                            generator_cmd(cmd='on')
+                            logger_msg = '{} {} {} {}'.format(up_msg, 'for ',
+                                                          timeout_frame, 'minutes')
+                            logging_handler(logger_msg)
+                            set_gen_state(True, time_stamp=get_current_time())
+                            send_mail(send_to=from_address, subject='Generator Control Message', text=logger_msg)
+                            delete_messages()
+                            while timeout_stamp > datetime.datetime.now():
+                                time_left = timeout_stamp - datetime.datetime.now()
+                                time.sleep(sleep_time)
+                                msg = ('{} {} {}'.format('Generator is on for the next',
+                                                            chop_microseconds(time_left), 'minutes'))
+                                logging_handler(msg)
+                                try:
+                                    key_command, from_address = poll_mail()
+                                    if 'off' in key_command:
+                                        time_args = timeout_frame, time_left
+                                        off_command(time_args)
+                                        break
+                                    elif 'status' in key_command:
+                                        status_command()
+                                    elif 'log' in key_command:
+                                        log_command()
+                                    elif 'usage' in key_command:
+                                        usage_command()
+                                    else:
+                                        unknown_command()
+                                except:
+                                    pass
+                            if get_gen_state() == 'up':
+                                generator_cmd(cmd='off')
+                                mail_msg = '{} {} {}'.format('Generator is going down after',
+                                                             timeout_frame, 'minutes')
+                                logging_handler(down_msg)
+                                send_mail(send_to=from_address, subject='Generator Control Message',
+                                          text=mail_msg)
+                                set_gen_state(False, time_stamp=get_current_time())
+                                on_time = chop_microseconds(timeout_stamp - start_time).seconds
+                                set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
+                                               time_span=on_time)
+                    else:
+                        logging_handler(already_up_msg)
+                elif 'log' in key_command:
+                    log_command()
+                elif 'status' in key_command:
+                    status_command()
+                elif 'usage':
+                    usage_command()
                 else:
-                    msg = '{} {}'.format(from_address, not_white_list)
-                    logging_handler(msg)
-                delete_messages()
-                time.sleep(sleep_time)
+                    unknown_command()
             else:
-                msg = '{} {}'.format('Connection failed due to', login_message)
+                msg = '{} {}'.format(from_address, not_white_list)
                 logging_handler(msg)
+            delete_messages()
+            time.sleep(sleep_time)
         except:
             msg = 'No mails'
             logging_handler(msg)
