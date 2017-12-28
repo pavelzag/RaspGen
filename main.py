@@ -8,6 +8,7 @@ import imaplib
 import logging
 from os import path, uname
 import re
+import requests
 import socket
 import time
 
@@ -66,6 +67,18 @@ def poll_mail():
             msg = '{} {}'.format('There\'s a problem with the', key_command)
             logging_handler(msg)
     return key_command, sender
+
+
+def check_internet_connection():
+    try:
+        r = requests.get('http://216.58.192.142')
+        if r.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.ConnectionError as err:
+        logging_handler('Internet went down!')
+        return False
 
 
 def delete_messages():
@@ -142,7 +155,8 @@ def calculate_monthly_usage(month):
 def off_command(time_args=None):
     """"Processes the Off Command"""
     generator_cmd(cmd='off')
-    set_gen_state(state=False, time_stamp=get_current_time())
+    if check_internet_connection():
+        set_gen_state(state=False, time_stamp=get_current_time())
     if time_args:
         timeout_frame, time_left = time_args
         on_time = chop_microseconds(datetime.timedelta(0, 0, 0, 0, timeout_frame) - time_left).seconds + 120
@@ -155,8 +169,9 @@ def off_command(time_args=None):
         msg_to_log = '{} {} {}'.format('The generator was up for:', how_long, units)
         logging_handler(msg_to_log)
         mail_msg = '{} {}'.format(down_msg, msg_to_log)
-    set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),time_span=on_time)
-    send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+    if check_internet_connection():
+        set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),time_span=on_time)
+        send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
 
 
 def log_command():
@@ -198,6 +213,7 @@ def unknown_command():
     send_mail(send_to=from_address, text=msg)
     delete_messages()
 
+
 if __name__ == '__main__':
     ip_address = get_machine_ip()
     startup_msg = '{} {}'.format('Machine runs on', ip_address)
@@ -206,8 +222,7 @@ if __name__ == '__main__':
     send_mail(send_to=owner, subject='Start up Message', text=startup_msg)
     set_initial_db_state()
     start_time = None
-    i = 1
-    while i == 1:
+    while check_internet_connection():
         try:
             key_command, from_address = poll_mail()
             logging_handler('{} {}'.format('The key command is', key_command))
@@ -238,41 +253,44 @@ if __name__ == '__main__':
                             set_gen_state(True, time_stamp=get_current_time())
                             send_mail(send_to=from_address, subject='Generator Control Message', text=logger_msg)
                             delete_messages()
-                            while timeout_stamp > datetime.datetime.now():
-                                time_left = timeout_stamp - datetime.datetime.now()
-                                time.sleep(sleep_time)
-                                msg = ('{} {} {}'.format('Generator is on for the next',
-                                                            chop_microseconds(time_left), 'minutes'))
-                                logging_handler(msg)
-                                try:
-                                    key_command, from_address = poll_mail()
-                                    if 'off' in key_command:
-                                        time_args = timeout_frame, time_left
-                                        off_command(time_args)
-                                        break
-                                    elif 'status' in key_command:
-                                        status_command()
-                                    elif 'log' in key_command:
-                                        log_command()
-                                    elif 'usage' in key_command:
-                                        usage_command()
-                                    else:
-                                        unknown_command()
-                                except:
-                                    pass
-                            if get_gen_state() == 'up':
-                                generator_cmd(cmd='off')
-                                mail_msg = '{} {} {}'.format('Generator is going down after',
-                                                             timeout_frame, 'minutes')
-                                logging_handler(down_msg)
-                                send_mail(send_to=from_address, subject='Generator Control Message',
-                                          text=mail_msg)
-                                set_gen_state(False, time_stamp=get_current_time())
-                                on_time = chop_microseconds(timeout_stamp - start_time).seconds
-                                set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
-                                               time_span=on_time)
-                    else:
-                        logging_handler(already_up_msg)
+                            while timeout_stamp > datetime.datetime.now() and check_internet_connection():
+                                    time_left = timeout_stamp - datetime.datetime.now()
+                                    time.sleep(sleep_time)
+                                    msg = ('{} {} {}'.format('Generator is on for the next',
+                                                                chop_microseconds(time_left), 'minutes'))
+                                    logging_handler(msg)
+                                    try:
+                                        key_command, from_address = poll_mail()
+                                        if 'off' in key_command:
+                                            time_args = timeout_frame, time_left
+                                            off_command(time_args)
+                                            break
+                                        elif 'status' in key_command:
+                                            status_command()
+                                        elif 'log' in key_command:
+                                            log_command()
+                                        elif 'usage' in key_command:
+                                            usage_command()
+                                        else:
+                                            unknown_command()
+                                    except:
+                                        pass
+                            else:
+                                off_command()
+                            if check_internet_connection():
+                                if get_gen_state() == 'up':
+                                    generator_cmd(cmd='off')
+                                    mail_msg = '{} {} {}'.format('Generator is going down after',
+                                                                 timeout_frame, 'minutes')
+                                    logging_handler(down_msg)
+                                    send_mail(send_to=from_address, subject='Generator Control Message',
+                                              text=mail_msg)
+                                    set_gen_state(False, time_stamp=get_current_time())
+                                    on_time = chop_microseconds(timeout_stamp - start_time).seconds
+                                    set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),
+                                                   time_span=on_time)
+                                else:
+                                    logging_handler(already_up_msg)
                 elif 'log' in key_command:
                     log_command()
                 elif 'status' in key_command:
@@ -290,3 +308,5 @@ if __name__ == '__main__':
             msg = 'No mails'
             logging_handler(msg)
             time.sleep(sleep_time)
+    else:
+        off_command()
