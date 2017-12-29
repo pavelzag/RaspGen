@@ -70,15 +70,16 @@ def poll_mail():
 
 
 def check_internet_connection():
-    try:
-        r = requests.get('http://216.58.192.142')
-        if r.status_code == 200:
-            return True
-        else:
-            return False
-    except requests.ConnectionError as err:
-        logging_handler('Internet went down!')
-        return False
+    return True
+    # try:
+    #     r = requests.get('http://216.58.192.142')
+    #     if r.status_code == 200:
+    #         return True
+    #     else:
+    #         return False
+    # except requests.ConnectionError as err:
+    #     logging_handler('Internet went down!')
+    #     return False
 
 
 def delete_messages():
