@@ -71,6 +71,8 @@ def poll_mail():
 
 def check_internet_connection():
     return True
+    # TODO Add a logic to check a timeout over a longer period than at
+    # the moment to mitigate meomentary disconnections
     # try:
     #     r = requests.get('http://216.58.192.142')
     #     if r.status_code == 200:
