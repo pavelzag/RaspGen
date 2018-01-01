@@ -59,7 +59,10 @@ def poll_mail():
                 msg = email.message_from_string(response_part[1])
     if msg:
         from_message = msg['From']
-        sender = re.findall(r'<(.*?)>', from_message)[0]
+        if '<' in from_message:
+            sender = re.findall(r'<(.*?)>', from_message)[0]
+        else:
+            sender = from_message
         try:
             key_command = msg['subject'].lower()
             logging_handler('{} {}'.format('The request subject is:', key_command))
