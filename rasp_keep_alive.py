@@ -1,10 +1,10 @@
 import datetime
 import requests
 import time
+from configuration import get_keep_alive
 from logger import logging_handler
-time_sleep = 60
-
-url = 'https://raspgen-keep-alive.herokuapp.com/keep_alive'
+time_sleep = get_keep_alive('time_out')
+url = get_keep_alive('url')
 
 
 def get_current_time():

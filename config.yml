@@ -12,3 +12,6 @@ mongodb:
     test_uri: 'mongodb://root:pass@ds123456.mlab.com:23456/test'
     prod_uri: 'mongodb://root:pass@ds223456.mlab.com:23456/raspgen'
     env: 'prod'
+keep_alive:
+    time_out: 120
+    url: 'https://raspgen-keep-alive.com/keep_alive'
