@@ -132,7 +132,8 @@ def get_current_time(date=False, datetime_format=False):
 
 def calculate_time_span(time_span):
     """"Returns the time span in tuple format"""
-    #TODO Add Hours
+    if time_span > 3600:
+        return time.strftime("%H:%M:%S", time.gmtime(time_span)), 'hours'
     if time_span > 60:
         return time.strftime("%M:%S", time.gmtime(time_span)), 'minutes'
     else:
