@@ -29,6 +29,8 @@ debug_message = 'Debugging message.'
 not_white_list = 'is not in the white list.'
 white_list = 'is in the white list.'
 pin = int(get_pin())
+global i
+i = 0
 
 
 def generator_cmd(cmd):
@@ -69,7 +71,7 @@ def poll_mail():
     return key_command, sender
 
 
-def check_internet_connection():
+def check_internet_connection(i):
     try:
         r = requests.get('http://216.58.192.142')
         if r.status_code == 200:
@@ -77,8 +79,13 @@ def check_internet_connection():
         else:
             return False
     except requests.ConnectionError as err:
-        logging_handler('Internet went down!')
-        return False
+        i += 1
+        time.sleep(1)
+        if i < 5:
+            logging_handler('{} {} {}'.format('Attempt number', i, 'to resume connection'))
+            check_internet_connection(i)
+        else:
+            return False
 
 
 def delete_messages():
@@ -155,23 +162,26 @@ def calculate_monthly_usage(month):
 def off_command(time_args=None):
     """"Processes the Off Command"""
     generator_cmd(cmd='off')
-    if check_internet_connection():
+    if check_internet_connection(i):
         set_gen_state(state=False, time_stamp=get_current_time())
     if time_args:
         timeout_frame, time_left = time_args
         on_time = chop_microseconds(datetime.timedelta(0, 0, 0, 0, timeout_frame) - time_left).seconds + 120
         usage_time = str(datetime.timedelta(seconds=on_time))
         mail_msg = '{} {} {}'.format('Generator is going down after', usage_time, 'minutes')
-    else:
+    elif start_time:
         # Adding 2 minutes compensation for going down
+        # TODO fix scenario of shutting down when going offline
         on_time = int((datetime.datetime.now() - start_time).total_seconds()) + 120
         how_long, units = calculate_time_span(on_time)
         msg_to_log = '{} {} {}'.format('The generator was up for:', how_long, units)
         logging_handler(msg_to_log)
         mail_msg = '{} {}'.format(down_msg, msg_to_log)
-    if check_internet_connection():
+    if check_internet_connection(i):
         set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),time_span=on_time)
         send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+    else:
+        logging_handler('Shutting down the generator')
 
 
 def log_command():
@@ -222,7 +232,7 @@ if __name__ == '__main__':
     send_mail(send_to=owner, subject='Start up Message', text=startup_msg)
     set_initial_db_state()
     start_time = None
-    while check_internet_connection():
+    while check_internet_connection(i):
         try:
             key_command, from_address = poll_mail()
             logging_handler('{} {}'.format('The key command is', key_command))
@@ -253,7 +263,7 @@ if __name__ == '__main__':
                             set_gen_state(True, time_stamp=get_current_time())
                             send_mail(send_to=from_address, subject='Generator Control Message', text=logger_msg)
                             delete_messages()
-                            while timeout_stamp > datetime.datetime.now() and check_internet_connection():
+                            while timeout_stamp > datetime.datetime.now() and check_internet_connection(i):
                                     time_left = timeout_stamp - datetime.datetime.now()
                                     time.sleep(sleep_time)
                                     msg = ('{} {} {}'.format('Generator is on for the next',
@@ -277,7 +287,7 @@ if __name__ == '__main__':
                                         pass
                             else:
                                 off_command()
-                            if check_internet_connection():
+                            if check_internet_connection(i):
                                 if get_gen_state() == 'up':
                                     generator_cmd(cmd='off')
                                     mail_msg = '{} {} {}'.format('Generator is going down after',
@@ -305,8 +315,8 @@ if __name__ == '__main__':
             delete_messages()
             time.sleep(sleep_time)
         except:
-            # msg = 'No mails'
-            # logging_handler(msg)
+            msg = 'No mails'
+            logging_handler(msg)
             time.sleep(sleep_time)
     else:
         off_command()
