@@ -71,8 +71,6 @@ def poll_mail():
 
 def check_internet_connection():
     return True
-    # TODO Add a logic to check a timeout over a longer period than at
-    # the moment to mitigate meomentary disconnections
     # try:
     #     r = requests.get('http://216.58.192.142')
     #     if r.status_code == 200:
@@ -80,8 +78,13 @@ def check_internet_connection():
     #     else:
     #         return False
     # except requests.ConnectionError as err:
-    #     logging_handler('Internet went down!')
-    #     return False
+    #     i += 1
+    #     time.sleep(1)
+    #     if i < 5:
+    #         logging_handler('{} {} {}'.format('Attempt number', i, 'to resume connection'))
+    #         check_internet_connection(i)
+    #     else:
+    #         return False
 
 
 def delete_messages():
@@ -165,8 +168,9 @@ def off_command(time_args=None):
         on_time = chop_microseconds(datetime.timedelta(0, 0, 0, 0, timeout_frame) - time_left).seconds + 120
         usage_time = str(datetime.timedelta(seconds=on_time))
         mail_msg = '{} {} {}'.format('Generator is going down after', usage_time, 'minutes')
-    else:
+    elif start_time:
         # Adding 2 minutes compensation for going down
+        # TODO fix scenario of shutting down when going offline
         on_time = int((datetime.datetime.now() - start_time).total_seconds()) + 120
         how_long, units = calculate_time_span(on_time)
         msg_to_log = '{} {} {}'.format('The generator was up for:', how_long, units)
@@ -175,6 +179,8 @@ def off_command(time_args=None):
     if check_internet_connection():
         set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),time_span=on_time)
         send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
+    else:
+        logging_handler('Shutting down the generator')
 
 
 def log_command():
