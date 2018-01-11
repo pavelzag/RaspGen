@@ -199,11 +199,21 @@ def log_command():
 
 def pic_command():
     """"Processes the Pic Command"""
-    msg = '{} {}'.format('Sending pic to', from_address)
-    logging_handler(msg)
-    send_mail(send_to=from_address, subject='Picture Message',
-              text='Pics attached', file=image_file_path)
-    delete_messages()
+    url = get_cam_url()
+    try:
+        r = requests.get(url)
+        with open(image_file_path, 'wb') as fout:
+            fout.write(r.content)
+        logging_handler('{} {}'.format(image_file_path, 'was saved successfully'))
+        msg = '{} {}'.format('Sending pic to', from_address)
+        logging_handler(msg)
+        send_mail(send_to=from_address, subject='Picture Message',
+                  text='Pics attached', file=image_file_path)
+        delete_messages()
+
+    except:
+        logging_handler('Failed to retrieve the image')
+        delete_messages()
 
 
 def usage_command():
@@ -235,14 +245,6 @@ def unknown_command():
     logging_handler(msg)
     send_mail(send_to=from_address, text=msg)
     delete_messages()
-
-
-def get_pic():
-    url = get_cam_url()
-    r = requests.get(url)
-    with open(image_file_path, 'wb') as fout:
-        fout.write(r.content)
-    logging_handler('{} {}'.format(image_file_path, 'was saved successfully'))
 
 
 if __name__ == '__main__':
@@ -325,7 +327,6 @@ if __name__ == '__main__':
                 elif 'log' in key_command:
                     log_command()
                 elif 'pic' in key_command:
-                    get_pic()
                     pic_command()
                 elif 'status' in key_command:
                     status_command()
