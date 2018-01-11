@@ -1,5 +1,5 @@
 from dbconnector import set_gen_state, get_gen_state, get_time_spent, set_initial_db_state, set_time_spent
-from configuration import get_config, get_white_list, get_pin
+from configuration import get_config, get_white_list, get_pin, get_cam_url
 from logger import logging_handler
 from send_mail import send_mail
 import datetime
@@ -20,6 +20,7 @@ owner = get_config('owner')
 sleep_time = int(get_config('sleep_time'))
 dir_path = path.dirname(path.realpath(__file__))
 file_logging_path = path.join(dir_path, 'generator.txt')
+image_file_path = path.join(dir_path, 'received_image.jpg')
 logging.basicConfig(filename=file_logging_path,level=logging.INFO)
 down_msg = 'Generator is going down.'
 up_msg = 'Generator is going up.'
@@ -196,6 +197,15 @@ def log_command():
     delete_messages()
 
 
+def pic_command():
+    """"Processes the Pic Command"""
+    msg = '{} {}'.format('Sending pic to', from_address)
+    logging_handler(msg)
+    send_mail(send_to=from_address, subject='Picture Message',
+              text='Pics attached', file=image_file_path)
+    delete_messages()
+
+
 def usage_command():
     """"Processes the Usage Command"""
     usage_seconds = calculate_monthly_usage(datetime.datetime.now().month)
@@ -225,6 +235,14 @@ def unknown_command():
     logging_handler(msg)
     send_mail(send_to=from_address, text=msg)
     delete_messages()
+
+
+def get_pic():
+    url = get_cam_url()
+    r = requests.get(url)
+    with open(image_file_path, 'wb') as fout:
+        fout.write(r.content)
+    logging_handler('{} {}'.format(image_file_path, 'was saved successfully'))
 
 
 if __name__ == '__main__':
@@ -306,6 +324,9 @@ if __name__ == '__main__':
                                     logging_handler(already_up_msg)
                 elif 'log' in key_command:
                     log_command()
+                elif 'pic' in key_command:
+                    get_pic()
+                    pic_command()
                 elif 'status' in key_command:
                     status_command()
                 elif 'usage':

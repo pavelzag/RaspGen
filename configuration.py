@@ -25,3 +25,7 @@ def get_db_creds(parameter_name):
 
 def get_keep_alive(parameter_name):
     return cfg['keep_alive'][parameter_name]
+
+
+def get_cam_url():
+    return cfg['cam_url']
