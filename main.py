@@ -302,6 +302,8 @@ if __name__ == '__main__':
                                             status_command()
                                         elif 'log' in key_command:
                                             log_command()
+                                        elif 'pic' in key_command:
+                                            pic_command()
                                         elif 'usage' in key_command:
                                             usage_command()
                                         else:
