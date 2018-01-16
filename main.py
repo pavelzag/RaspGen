@@ -342,8 +342,8 @@ if __name__ == '__main__':
             delete_messages()
             time.sleep(sleep_time)
         except:
-            msg = 'No mails'
-            logging_handler(msg)
+            # msg = 'No mails'
+            # logging_handler(msg)
             time.sleep(sleep_time)
     else:
         off_command()
