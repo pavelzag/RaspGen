@@ -2,6 +2,7 @@ from dbconnector import set_gen_state, get_gen_state, get_time_spent, set_initia
 from configuration import get_config, get_white_list, get_pin, get_cam_url
 from logger import logging_handler
 from send_mail import send_mail
+from file_reader import get_retries, write_retries
 import datetime
 import email
 import imaplib
@@ -30,6 +31,8 @@ debug_message = 'Debugging message.'
 not_white_list = 'is not in the white list.'
 white_list = 'is in the white list.'
 pin = int(get_pin())
+global connection_retries_max
+connection_retries_max = 5
 
 
 def generator_cmd(cmd):
@@ -73,22 +76,23 @@ def poll_mail():
     return key_command, sender
 
 
-def check_internet_connection():
-    return True
-    # try:
-    #     r = requests.get('http://216.58.192.142')
-    #     if r.status_code == 200:
-    #         return True
-    #     else:
-    #         return False
-    # except requests.ConnectionError as err:
-    #     i += 1
-    #     time.sleep(1)
-    #     if i < 5:
-    #         logging_handler('{} {} {}'.format('Attempt number', i, 'to resume connection'))
-    #         check_internet_connection(i)
-    #     else:
-    #         return False
+def check_internet_connection(connection_retries):
+    try:
+        logging_handler('Testing the internet connection')
+        r = requests.get('http://216.58.192.142')
+        if r.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.ConnectionError as err:
+        connection_retries += 1
+        time.sleep(1)
+        if connection_retries < connection_retries_max:
+            logging_handler('{} {} {}'.format('Attempt number', connection_retries, 'to resume connection'))
+            check_internet_connection(connection_retries)
+        else:
+            write_retries(connection_retries)
+            return False
 
 
 def delete_messages():
@@ -166,8 +170,10 @@ def calculate_monthly_usage(month):
 def off_command(time_args=None):
     """"Processes the Off Command"""
     generator_cmd(cmd='off')
-    if check_internet_connection():
-        set_gen_state(state=False, time_stamp=get_current_time())
+    connection_retries = get_retries()
+    # if connection_retries < connection_retries_max:
+    #     check_internet_connection(connection_retries)
+    #     set_gen_state(state=False, time_stamp=get_current_time())
     if time_args:
         timeout_frame, time_left = time_args
         on_time = chop_microseconds(datetime.timedelta(0, 0, 0, 0, timeout_frame) - time_left).seconds + 120
@@ -181,7 +187,8 @@ def off_command(time_args=None):
         msg_to_log = '{} {} {}'.format('The generator was up for:', how_long, units)
         logging_handler(msg_to_log)
         mail_msg = '{} {}'.format(down_msg, msg_to_log)
-    if check_internet_connection():
+    if connection_retries < connection_retries_max:
+        set_gen_state(state=False, time_stamp=get_current_time())
         set_time_spent(time_stamp=get_current_time(date=True, datetime_format=True),time_span=on_time)
         send_mail(send_to=from_address, subject='Generator Control Message', text=mail_msg)
     else:
@@ -255,7 +262,9 @@ if __name__ == '__main__':
     send_mail(send_to=owner, subject='Start up Message', text=startup_msg)
     set_initial_db_state()
     start_time = None
-    while check_internet_connection():
+    write_retries(0)
+    connection_retries = 0
+    while check_internet_connection(connection_retries):
         try:
             key_command, from_address = poll_mail()
             logging_handler('{} {}'.format('The key command is', key_command))
@@ -286,7 +295,7 @@ if __name__ == '__main__':
                             set_gen_state(True, time_stamp=get_current_time())
                             send_mail(send_to=from_address, subject='Generator Control Message', text=logger_msg)
                             delete_messages()
-                            while timeout_stamp > datetime.datetime.now() and check_internet_connection():
+                            while timeout_stamp > datetime.datetime.now() and check_internet_connection(connection_retries):
                                     time_left = timeout_stamp - datetime.datetime.now()
                                     time.sleep(sleep_time)
                                     msg = ('{} {} {}'.format('Generator is on for the next',
@@ -312,7 +321,9 @@ if __name__ == '__main__':
                                         pass
                             else:
                                 off_command()
-                            if check_internet_connection():
+                            connection_retries = get_retries()
+                            if connection_retries < connection_retries_max:
+                                # if check_internet_connection(connection_retries):
                                 if get_gen_state() == 'up':
                                     generator_cmd(cmd='off')
                                     mail_msg = '{} {} {}'.format('Generator is going down after',
